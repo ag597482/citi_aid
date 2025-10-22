@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'new_complaint.dart';
+import 'customer_profile.dart';
+import 'complaint_detail.dart';
 
 class Complaint {
   final String id;
@@ -196,6 +198,29 @@ class _FeedPageState extends State<FeedPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2E8F0).withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const CustomerProfilePage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.person,
+                            color: Color(0xFF64748B),
+                            size: 20,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -322,7 +347,17 @@ class _FeedPageState extends State<FeedPage> {
                 itemCount: _complaints.length,
                 itemBuilder: (context, index) {
                   final complaint = _complaints[index];
-                  return Container(
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ComplaintDetailPage(
+                            complaintId: complaint.id,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -561,6 +596,7 @@ class _FeedPageState extends State<FeedPage> {
                           ),
                         ],
                       ),
+                    ),
                     ),
                   );
                 },

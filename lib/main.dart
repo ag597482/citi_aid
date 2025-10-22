@@ -18,6 +18,9 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
       ),
       home: const LoginPage(),
+      routes: {
+        '/login': (context) => const LoginPage(),
+      },
     );
   }
 }

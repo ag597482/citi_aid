@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'new_complaint.dart';
 
 class Complaint {
   final String id;
@@ -566,6 +567,20 @@ class _FeedPageState extends State<FeedPage> {
               ),
             ),
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const NewComplaintPage(),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFF136AF6),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
         ),
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'feed_page.dart';
+import 'customer_signup.dart';
+import 'admin_home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,10 +11,10 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  bool _isLoginTab = true;
   bool _isPasswordVisible = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  String _selectedRole = 'Customer';
 
   @override
   void dispose() {
@@ -65,73 +67,51 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
             ),
-            
-            // Tab bar
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFFE2E8F0),
+
+            // Role Dropdown
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
                     width: 1,
                   ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _isLoginTab = true),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: _isLoginTab ? const Color(0xFF136AF6) : Colors.transparent,
-                              width: 3,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'Login',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: _isLoginTab ? const Color(0xFF136AF6) : const Color(0xFF64748B),
-                            letterSpacing: 0.015,
-                          ),
-                        ),
-                      ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedRole,
+                    isExpanded: true,
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: Color(0xFF64748B),
                     ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _isLoginTab = false),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: !_isLoginTab ? const Color(0xFF136AF6) : Colors.transparent,
-                              width: 3,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'Register',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: !_isLoginTab ? const Color(0xFF136AF6) : const Color(0xFF64748B),
-                            letterSpacing: 0.015,
-                          ),
-                        ),
-                      ),
+                    iconSize: 24,
+                    elevation: 16,
+                    style: const TextStyle(
+                      color: Color(0xFF1E293B),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
+                    dropdownColor: Colors.white,
+                    items: ['Customer', 'Agent', 'Admin'].map((String role) {
+                      return DropdownMenuItem<String>(
+                        value: role,
+                        child: Text(role),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedRole = newValue;
+                        });
+                      }
+                    },
                   ),
-                ],
+                ),
               ),
             ),
             
@@ -280,12 +260,22 @@ class _LoginPageState extends State<LoginPage> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Navigate to feed page
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => const FeedPage(),
-                            ),
-                          );
+                          // Navigate based on role
+                          if (_selectedRole == 'Admin') {
+                            // Navigate to admin home
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const AdminHomePage(),
+                              ),
+                            );
+                          } else {
+                            // Navigate to feed page for Customer and Agent
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const FeedPage(),
+                              ),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF136AF6),
@@ -294,9 +284,9 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           elevation: 0,
                         ),
-                        child: Text(
-                          _isLoginTab ? 'Login' : 'Register',
-                          style: const TextStyle(
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -305,6 +295,43 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+                    
+                    // Register button (only for Customer)
+                    if (_selectedRole == 'Customer') ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            // Navigate to customer signup page
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const CustomerSignupPage(),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: Color(0xFF136AF6),
+                              width: 2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Register',
+                            style: TextStyle(
+                              color: Color(0xFF136AF6),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.015,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     
                     const SizedBox(height: 24),
                     

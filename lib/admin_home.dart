@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'active_complaints.dart';
+import 'add_new_agent.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -155,8 +157,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
                           icon: Icons.person_add,
                           title: 'Assign Agent',
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Assign Agent')),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const ActiveComplaintsPage(),
+                              ),
                             );
                           },
                         ),
@@ -164,8 +168,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
                           icon: Icons.group_add,
                           title: 'Add New Agent',
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Add New Agent')),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const AddNewAgentPage(),
+                              ),
                             );
                           },
                         ),
@@ -173,8 +179,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
                           icon: Icons.list_alt,
                           title: 'Monitor Complaints',
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Monitor Complaints')),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const ActiveComplaintsPage(),
+                              ),
                             );
                           },
                         ),

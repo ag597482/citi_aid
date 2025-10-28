@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'assign_agent.dart';
 
 class ComplaintDetailPage extends StatefulWidget {
-  final String complaintId;
+  final dynamic complaintId;
+  final bool isAdminView;
   
   const ComplaintDetailPage({
     super.key,
     required this.complaintId,
+    this.isAdminView = false,
   });
 
   @override

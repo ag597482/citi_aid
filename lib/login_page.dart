@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'feed_page.dart';
 import 'customer_signup.dart';
 import 'admin_home.dart';
+import 'agent_home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -268,8 +269,15 @@ class _LoginPageState extends State<LoginPage> {
                                 builder: (context) => const AdminHomePage(),
                               ),
                             );
+                          } else if (_selectedRole == 'Agent') {
+                            // Navigate to agent home
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const AgentHomePage(),
+                              ),
+                            );
                           } else {
-                            // Navigate to feed page for Customer and Agent
+                            // Navigate to feed page for Customer
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
                                 builder: (context) => const FeedPage(),

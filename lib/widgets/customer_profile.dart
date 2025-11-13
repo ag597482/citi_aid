@@ -20,15 +20,23 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           children: [
             // Top App Bar
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F7F8),
-                border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF136AF6),
+                    const Color(0xFF136AF6).withOpacity(0.8),
+                  ],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -36,14 +44,14 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(
                         Icons.arrow_back,
-                        color: Color(0xFF111318),
+                        color: Colors.white,
                         size: 24,
                       ),
                     ),
@@ -52,15 +60,15 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                     child: Text(
                       'Profile',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
+                      style: const TextStyle(
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF111318),
-                        letterSpacing: -0.015,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48), // Spacer to center the title
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -122,10 +130,26 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
             // Edit Profile Button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: SizedBox(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Container(
                 width: double.infinity,
-                height: 48,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF136AF6),
+                      Color(0xFF0D5AE0),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF136AF6).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -136,19 +160,19 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF136AF6),
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    elevation: 0,
                   ),
                   child: const Text(
                     'Edit Profile',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 17,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.015,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
@@ -157,19 +181,26 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
             // Button Group
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
-                      height: 48,
+                      height: 56,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFE5E7EB),
-                          width: 1,
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.5,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Material(
                         color: Colors.transparent,
@@ -182,15 +213,15 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                               ),
                             );
                           },
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(16),
                           child: const Center(
                             child: Text(
                               'My Active Complaints',
                               style: TextStyle(
-                                color: Color(0xFF111318),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.015,
+                                color: Color(0xFF1E293B),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ),
@@ -201,14 +232,21 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
-                      height: 48,
+                      height: 56,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFE5E7EB),
-                          width: 1,
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.5,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Material(
                         color: Colors.transparent,
@@ -221,15 +259,15 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                               ),
                             );
                           },
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(16),
                           child: const Center(
                             child: Text(
                               'My Closed Complaints',
                               style: TextStyle(
-                                color: Color(0xFF111318),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.015,
+                                color: Color(0xFF1E293B),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ),
@@ -262,14 +300,21 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
             // Settings Container
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                  width: 1,
+                  color: const Color(0xFFE2E8F0),
+                  width: 1.5,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -401,10 +446,21 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
             // Logout Button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: SizedBox(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Container(
                 width: double.infinity,
-                height: 48,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     showDialog(
@@ -434,19 +490,19 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    elevation: 0,
                   ),
                   child: const Text(
                     'Logout',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 17,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.015,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),

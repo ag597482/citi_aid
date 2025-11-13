@@ -14,107 +14,133 @@ class _AgentHomePageState extends State<AgentHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
-      body: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // Search bar
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.search,
-                      color: Color(0xFF1C1C1E),
-                      size: 24,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          hintText: 'Search by ID, Street...',
-                          hintStyle: TextStyle(
-                            color: Color(0xFF8A8A8E),
-                            fontSize: 16,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 8,
-                          ),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF1C1C1E),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.filter_list,
-                        color: Color(0xFF1C1C1E),
-                        size: 24,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.map,
-                        color: Color(0xFF1C1C1E),
-                        size: 24,
-                      ),
-                    ),
+      backgroundColor: const Color(0xFFF5F7F8),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF136AF6),
+                    const Color(0xFF136AF6).withOpacity(0.8),
                   ],
                 ),
-              ],
-            ),
-          ),
-
-          // Tabs
-          Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: Color(0xFFD1D1D6), width: 0.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Search bar
+                  Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(left: 20),
+                          child: Icon(
+                            Icons.search,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: 'Search by ID, Street...',
+                              hintStyle: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 15,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(
+                            Icons.filter_list,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(
+                            Icons.map,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildTab('Active', _selectedTab == 'Active'),
-                ),
-                Expanded(
-                  child: _buildTab('Past', _selectedTab == 'Past'),
-                ),
-                Expanded(
-                  child: _buildTab('Pending', _selectedTab == 'Pending'),
-                ),
-              ],
-            ),
-          ),
 
-          // Content
-          Expanded(
-            child: _selectedTab == 'Active'
-                ? _buildComplaintsList()
-                : _buildEmptyState(),
-          ),
-        ],
+            // Tabs
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildTab('Active', _selectedTab == 'Active'),
+                  ),
+                  Expanded(
+                    child: _buildTab('Past', _selectedTab == 'Past'),
+                  ),
+                  Expanded(
+                    child: _buildTab('Pending', _selectedTab == 'Pending'),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: _selectedTab == 'Active'
+                  ? _buildComplaintsList()
+                  : _buildEmptyState(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -125,20 +151,21 @@ class _AgentHomePageState extends State<AgentHomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? const Color(0xFF007AFF) : Colors.transparent,
-              width: 3,
-            ),
-          ),
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                )
+              : null,
+          color: isSelected ? null : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? const Color(0xFF007AFF) : const Color(0xFF8A8A8E),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : const Color(0xFF64748B),
             ),
           ),
         ),
@@ -211,12 +238,16 @@ class _AgentHomePageState extends State<AgentHomePage> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -414,7 +445,7 @@ class _AgentHomePageState extends State<AgentHomePage> {
           Icon(
             icon,
             size: 20,
-            color: const Color(0xFF007AFF),
+            color: const Color(0xFF136AF6),
           ),
           const SizedBox(width: 8),
           Text(
@@ -422,7 +453,7 @@ class _AgentHomePageState extends State<AgentHomePage> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF007AFF),
+              color: Color(0xFF136AF6),
             ),
           ),
         ],

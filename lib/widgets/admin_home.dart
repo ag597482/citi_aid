@@ -21,12 +21,23 @@ class _AdminHomePageState extends State<AdminHomePage> {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F7F8),
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFF8E8E93), width: 0.2),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF136AF6),
+                    const Color(0xFF136AF6).withOpacity(0.8),
+                  ],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -34,18 +45,19 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     child: Text(
                       'Dashboard',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF111318),
+                        color: Colors.white,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
                       onPressed: () {
@@ -53,8 +65,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
                       },
                       icon: const Icon(
                         Icons.notifications,
-                        color: Color(0xFF111318),
-                        size: 20,
+                        color: Colors.white,
+                        size: 24,
                       ),
                     ),
                   ),
@@ -64,21 +76,32 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
             // Search Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Container(
-                height: 48,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
                     const Padding(
-                      padding: EdgeInsets.only(left: 16),
+                      padding: EdgeInsets.only(left: 20),
                       child: Icon(
                         Icons.search,
-                        color: Color(0xFF6B7280),
-                        size: 20,
+                        color: Color(0xFF136AF6),
+                        size: 22,
                       ),
                     ),
                     Expanded(
@@ -86,18 +109,19 @@ class _AdminHomePageState extends State<AdminHomePage> {
                         decoration: const InputDecoration(
                           hintText: 'Search ID, address, agent...',
                           hintStyle: TextStyle(
-                            color: Color(0xFF6B7280),
-                            fontSize: 16,
+                            color: Color(0xFF94A3B8),
+                            fontSize: 15,
                           ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
+                            horizontal: 16,
+                            vertical: 16,
                           ),
                         ),
                         style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF111318),
+                          fontSize: 15,
+                          color: Color(0xFF1E293B),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
@@ -108,10 +132,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
             // Filter Chips
             SizedBox(
-              height: 36,
+              height: 44,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
                   _buildFilterChip('Today', _selectedTimeFilter == 'Today'),
                   const SizedBox(width: 12),
@@ -299,18 +323,42 @@ class _AdminHomePageState extends State<AdminHomePage> {
     return GestureDetector(
       onTap: () => setState(() => _selectedTimeFilter = label),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF136AF6) : const Color(0xFFE2E8F0),
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                )
+              : null,
+          color: isSelected ? null : Colors.white,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF136AF6).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isSelected ? Colors.white : const Color(0xFF111318),
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : const Color(0xFF1E293B),
             ),
           ),
         ),
@@ -326,15 +374,27 @@ class _AdminHomePageState extends State<AdminHomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF136AF6).withOpacity(0.1),
+              const Color(0xFF136AF6).withOpacity(0.05),
+            ],
+          ),
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -342,26 +402,36 @@ class _AdminHomePageState extends State<AdminHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFF136AF6).withOpacity(0.2),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF136AF6).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Icon(
                 icon,
-                color: const Color(0xFF136AF6),
-                size: 24,
+                color: Colors.white,
+                size: 28,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF111318),
+                color: Color(0xFF1E293B),
+                letterSpacing: 0.2,
               ),
             ),
           ],
@@ -372,15 +442,19 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   Widget _buildStatCard(String label, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -391,18 +465,20 @@ class _AdminHomePageState extends State<AdminHomePage> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF6B7280),
+              color: Color(0xFF64748B),
+              letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             value,
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 36,
               fontWeight: FontWeight.bold,
               color: color,
+              letterSpacing: -0.5,
             ),
           ),
         ],

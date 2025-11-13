@@ -27,100 +27,124 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F8),
-      body: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F7F8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF136AF6),
+                    const Color(0xFF136AF6).withOpacity(0.8),
+                  ],
                 ),
-              ],
-            ),
-            child: SafeArea(
-              bottom: false,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Top bar
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Color(0xFF111318),
-                          size: 20,
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                       ),
                       const Spacer(),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.more_vert,
-                          color: Color(0xFF111318),
-                          size: 24,
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () {},
+                          icon: const Icon(
+                            Icons.more_vert,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   const Text(
                     'Complaint #C-1701',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF111318),
-                      letterSpacing: -0.015,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Pothole on Main Street',
                     style: TextStyle(
-                      fontSize: 18,
-                      color: Color(0xFF6C757D),
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
 
-          // Content
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Chips
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Wrap(
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Chips
+                    Wrap(
                       spacing: 12,
                       runSpacing: 12,
                       children: [
-                        _buildChip('Pothole', const Color(0xFFE5E7EB), const Color(0xFF111318)),
-                        _buildChip('High', const Color(0xFFDC3545).withOpacity(0.2), const Color(0xFFDC3545)),
+                        _buildChip('Pothole', const Color(0xFFE2E8F0), const Color(0xFF1E293B)),
+                        _buildChip('High', const Color(0xFFFF3B30).withOpacity(0.2), const Color(0xFFFF3B30)),
                         _buildChip('New', const Color(0xFF136AF6).withOpacity(0.2), const Color(0xFF136AF6)),
                       ],
                     ),
-                  ),
 
-                  // Offline Sync Indicator
-                  if (_showOfflineSync)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
+                    const SizedBox(height: 16),
+                    
+                    // Offline Sync Indicator
+                    if (_showOfflineSync)
+                      Container(
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFD7E14).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
+                          color: const Color(0xFFFF9500).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFFFF9500).withOpacity(0.3),
+                            width: 1.5,
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -164,25 +188,27 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                           ],
                         ),
                       ),
-                    ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
-                  // Media Carousel
-                  _buildMediaCarousel(),
+                    // Media Carousel
+                    _buildMediaCarousel(),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
-                  // Map Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 192,
+                    // Map Section
+                    Container(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                          height: 200,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFE2E8F0),
+                              width: 1.5,
+                            ),
                             image: const DecorationImage(
                               image: NetworkImage(
                                 'https://lh3.googleusercontent.com/aida-public/AB6AXuBbTq_mIjDzTs00cFylZ7ikI0_AiBkskMlPe0kdS3nwl2tMobqC2ZKdTVc51IVjF3cBU17BDJ0Yi5taC9c2-APUUTufWy6k-YRVh3dV8vv8etQD2h59k7wQ75Tf6hIf84wby6lG_KHtpcsNHdUGz2D95pCG8xMawLCBtuu-t0w1tGZZM2wSUdatMxgJyC5l2IuXFqFMkxxlU80l7EQX1sG7xxZu3rqxnig72HndM1-NPFgekZTP3PaRi11NbyUN_qEygrB-L2QzzA',
@@ -190,69 +216,91 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                               fit: BoxFit.cover,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.open_in_new, size: 18),
-                                label: const Text(
-                                  'Open in Maps',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF136AF6),
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: Color(0xFF136AF6),
-                                    width: 1.5,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.navigation, size: 18),
-                                label: const Text(
-                                  'Start Navigation',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 48,
+                                  decoration: BoxDecoration(
                                     color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: const Color(0xFF136AF6),
+                                      width: 2,
+                                    ),
                                   ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF136AF6),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {},
+                                    icon: const Icon(Icons.open_in_new, size: 18, color: Color(0xFF136AF6)),
+                                    label: const Text(
+                                      'Open in Maps',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF136AF6),
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide.none,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                  elevation: 0,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Container(
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF136AF6).withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {},
+                                    icon: const Icon(Icons.navigation, size: 18),
+                                    label: const Text(
+                                      'Start Navigation',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
-                  // AI Helper Card
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
+                    // AI Helper Card
+                    Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         border: Border.all(
@@ -299,14 +347,11 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                         ],
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // Details
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
+                    // Details
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
@@ -333,14 +378,11 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                         _buildInfoRow('Last Updated:', 'Oct 26, 2023, 11:00 AM'),
                       ],
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // Activity Log
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
+                    // Activity Log
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
@@ -387,21 +429,19 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                         ),
                       ],
                     ),
-                  ),
 
-                  const SizedBox(height: 120), // Space for bottom panel
-                ],
+                    const SizedBox(height: 120),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-
-      // Bottom sticky action panel
       bottomSheet: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F7F8),
+          color: Colors.white,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -427,19 +467,28 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  height: 56,
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFFF5F7F8),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.grey[300]!,
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.5,
                     ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedStatus,
                       isExpanded: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      icon: const Padding(
+                        padding: EdgeInsets.only(right: 16),
+                        child: Icon(
+                          Icons.arrow_drop_down,
+                          color: Color(0xFF136AF6),
+                          size: 28,
+                        ),
+                      ),
                       items: const [
                         DropdownMenuItem(
                           value: 'Mark as Started',
@@ -462,8 +511,9 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                         }
                       },
                       style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF111318),
+                        fontSize: 15,
+                        color: Color(0xFF1E293B),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -487,9 +537,12 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[300]!),
+                    color: const Color(0xFFF5F7F8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.5,
+                    ),
                   ),
                   child: TextField(
                     controller: _noteController,
@@ -497,15 +550,16 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                     decoration: const InputDecoration(
                       hintText: 'Add progress, ETA, etc.',
                       hintStyle: TextStyle(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 14,
+                        color: Color(0xFF94A3B8),
+                        fontSize: 15,
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(12),
+                      contentPadding: EdgeInsets.all(20),
                     ),
                     style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF111318),
+                      fontSize: 15,
+                      color: Color(0xFF1E293B),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -515,14 +569,15 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
 
             // Upload after photos
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: Colors.grey[300]!,
+                  color: const Color(0xFFE2E8F0),
                   width: 2,
                   style: BorderStyle.solid,
                 ),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFFF5F7F8),
               ),
               child: Column(
                 children: [
@@ -530,35 +585,45 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                     'Upload at least one after-photo before marking this complaint as Fixed.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF6C757D),
+                      color: Color(0xFF64748B),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      // Handle photo upload
-                    },
-                    icon: const Icon(
-                      Icons.upload_file,
-                      size: 18,
-                    ),
-                    label: const Text(
-                      'Upload After Photo',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF136AF6),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFF136AF6),
+                        width: 2,
                       ),
                     ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        // Handle photo upload
+                      },
+                      icon: const Icon(
+                        Icons.upload_file,
+                        size: 18,
                         color: Color(0xFF136AF6),
-                        width: 1.5,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      label: const Text(
+                        'Upload After Photo',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF136AF6),
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                       ),
                     ),
                   ),
@@ -568,9 +633,22 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
             const SizedBox(height: 16),
 
             // Submit button
-            SizedBox(
+            Container(
               width: double.infinity,
-              height: 48,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF136AF6).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
               child: ElevatedButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -582,18 +660,19 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF136AF6),
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  elevation: 0,
                 ),
                 child: const Text(
                   'Submit Update',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
@@ -606,16 +685,20 @@ class _UpdateComplaintPageState extends State<UpdateComplaintPage> {
 
   Widget _buildChip(String label, Color backgroundColor, Color textColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: textColor.withOpacity(0.2),
+          width: 1.5,
+        ),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: textColor,
         ),
       ),

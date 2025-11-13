@@ -150,61 +150,79 @@ class _FeedPageState extends State<FeedPage> {
           children: [
             // Top App Bar
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF136AF6),
+                    const Color(0xFF136AF6).withOpacity(0.8),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
+                    child: const Text(
                       'Complaints',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E293B),
+                        color: Colors.white,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
                   Row(
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0).withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
                           onPressed: () {},
                           icon: const Icon(
                             Icons.location_on,
-                            color: Color(0xFF64748B),
-                            size: 20,
+                            color: Colors.white,
+                            size: 22,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0).withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
                           onPressed: () {},
                           icon: const Icon(
                             Icons.sort,
-                            color: Color(0xFF64748B),
-                            size: 20,
+                            color: Colors.white,
+                            size: 22,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0).withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
                           onPressed: () {
@@ -216,8 +234,8 @@ class _FeedPageState extends State<FeedPage> {
                           },
                           icon: const Icon(
                             Icons.person,
-                            color: Color(0xFF64748B),
-                            size: 20,
+                            color: Colors.white,
+                            size: 22,
                           ),
                         ),
                       ),
@@ -229,21 +247,32 @@ class _FeedPageState extends State<FeedPage> {
 
             // Search Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Container(
-                height: 48,
+                height: 56,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
                     const Padding(
-                      padding: EdgeInsets.only(left: 16),
+                      padding: EdgeInsets.only(left: 20),
                       child: Icon(
                         Icons.search,
-                        color: Color(0xFF64748B),
-                        size: 20,
+                        color: Color(0xFF136AF6),
+                        size: 22,
                       ),
                     ),
                     Expanded(
@@ -252,18 +281,19 @@ class _FeedPageState extends State<FeedPage> {
                         decoration: const InputDecoration(
                           hintText: 'Search by keyword or address',
                           hintStyle: TextStyle(
-                            color: Color(0xFF64748B),
-                            fontSize: 16,
+                            color: Color(0xFF94A3B8),
+                            fontSize: 15,
                           ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
+                            horizontal: 16,
+                            vertical: 16,
                           ),
                         ),
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           color: Color(0xFF1E293B),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
@@ -274,12 +304,16 @@ class _FeedPageState extends State<FeedPage> {
 
             // View Toggle
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Container(
-                height: 40,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0).withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFF5F7F8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -287,19 +321,31 @@ class _FeedPageState extends State<FeedPage> {
                       child: GestureDetector(
                         onTap: () => setState(() => _selectedView = 'List'),
                         child: Container(
-                          height: 40,
+                          height: 48,
                           decoration: BoxDecoration(
-                            color: _selectedView == 'List' 
-                                ? const Color(0xFF136AF6) 
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
+                            gradient: _selectedView == 'List'
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                                  )
+                                : null,
+                            color: _selectedView == 'List' ? null : Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: _selectedView == 'List'
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF136AF6).withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
                           ),
                           child: Center(
                             child: Text(
                               'List',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
                                 color: _selectedView == 'List' 
                                     ? Colors.white 
                                     : const Color(0xFF64748B),
@@ -313,19 +359,31 @@ class _FeedPageState extends State<FeedPage> {
                       child: GestureDetector(
                         onTap: () => setState(() => _selectedView = 'Map'),
                         child: Container(
-                          height: 40,
+                          height: 48,
                           decoration: BoxDecoration(
-                            color: _selectedView == 'Map' 
-                                ? const Color(0xFF136AF6) 
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
+                            gradient: _selectedView == 'Map'
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                                  )
+                                : null,
+                            color: _selectedView == 'Map' ? null : Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: _selectedView == 'Map'
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF136AF6).withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
                           ),
                           child: Center(
                             child: Text(
                               'Map',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
                                 color: _selectedView == 'Map' 
                                     ? Colors.white 
                                     : const Color(0xFF64748B),
@@ -343,7 +401,7 @@ class _FeedPageState extends State<FeedPage> {
             // Complaints List
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 itemCount: _complaints.length,
                 itemBuilder: (context, index) {
                   final complaint = _complaints[index];
@@ -361,12 +419,16 @@ class _FeedPageState extends State<FeedPage> {
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
@@ -605,18 +667,37 @@ class _FeedPageState extends State<FeedPage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const NewComplaintPage(),
+      floatingActionButton: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF136AF6).withOpacity(0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
-          );
-        },
-        backgroundColor: const Color(0xFF136AF6),
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const NewComplaintPage(),
+              ),
+            );
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 28,
+          ),
         ),
       ),
     );

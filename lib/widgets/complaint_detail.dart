@@ -32,30 +32,38 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
           children: [
             // Header Bar
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFF8E8E93),
-                    width: 0.2,
-                  ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF136AF6),
+                    const Color(0xFF136AF6).withOpacity(0.8),
+                  ],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(
                         Icons.arrow_back,
-                        color: Color(0xFF1C1C1E),
+                        color: Colors.white,
                         size: 24,
                       ),
                     ),
@@ -64,15 +72,15 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                     child: Text(
                       'Complaint Details',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
+                      style: const TextStyle(
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1C1C1E),
-                        letterSpacing: -0.015,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 40), // Spacer to center the title
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -80,7 +88,7 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -570,70 +578,106 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
           Row(
             children: [
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Sharing complaint...'),
-                        backgroundColor: Color(0xFF007AFF),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.share, size: 18),
-                  label: const Text('Share'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF007AFF),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
                     ),
-                    elevation: 0,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF136AF6).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Sharing complaint...'),
+                          backgroundColor: Color(0xFF136AF6),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.share, size: 18),
+                    label: const Text('Share'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Following complaint...'),
-                        backgroundColor: Color(0xFF007AFF),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.notifications, size: 18),
-                  label: const Text('Follow'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF5F7F8),
-                    foregroundColor: const Color(0xFF1C1C1E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.5,
                     ),
-                    elevation: 0,
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Following complaint...'),
+                          backgroundColor: Color(0xFF136AF6),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.notifications, size: 18, color: Color(0xFF136AF6)),
+                    label: const Text('Follow', style: TextStyle(color: Color(0xFF136AF6))),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Reporting duplicate...'),
-                        backgroundColor: Color(0xFF007AFF),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.control_point_duplicate, size: 18),
-                  label: const Text('Report Duplicate'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF5F7F8),
-                    foregroundColor: const Color(0xFF1C1C1E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.5,
                     ),
-                    elevation: 0,
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Reporting duplicate...'),
+                          backgroundColor: Color(0xFF136AF6),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.control_point_duplicate, size: 18, color: Color(0xFF136AF6)),
+                    label: const Text('Report Duplicate', style: TextStyle(color: Color(0xFF136AF6))),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -643,71 +687,91 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
           Row(
             children: [
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Editing complaint...'),
-                        backgroundColor: Color(0xFF007AFF),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.edit, size: 18),
-                  label: const Text('Edit'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF5F7F8),
-                    foregroundColor: const Color(0xFF1C1C1E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.5,
                     ),
-                    elevation: 0,
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Editing complaint...'),
+                          backgroundColor: Color(0xFF136AF6),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit, size: 18, color: Color(0xFF136AF6)),
+                    label: const Text('Edit', style: TextStyle(color: Color(0xFF136AF6))),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text('Close Complaint'),
-                          content: const Text('Are you sure you want to close this complaint?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Complaint closed'),
-                                    backgroundColor: Color(0xFFFF3B30),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'Close',
-                                style: TextStyle(color: Color(0xFFFF3B30)),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.close, size: 18),
-                  label: const Text('Close Complaint'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF3B30).withOpacity(0.2),
-                    foregroundColor: const Color(0xFFFF3B30),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.red.withOpacity(0.3),
+                      width: 1.5,
                     ),
-                    elevation: 0,
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Close Complaint'),
+                            content: const Text('Are you sure you want to close this complaint?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Complaint closed'),
+                                      backgroundColor: Color(0xFFFF3B30),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  'Close',
+                                  style: TextStyle(color: Color(0xFFFF3B30)),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.close, size: 18, color: Colors.red),
+                    label: const Text('Close Complaint', style: TextStyle(color: Colors.red)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -779,11 +843,20 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
             ),
             const SizedBox(width: 8),
             Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                color: Color(0xFF007AFF),
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF136AF6).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: IconButton(
                 onPressed: () {
@@ -791,7 +864,7 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Comment added!'),
-                        backgroundColor: Color(0xFF007AFF),
+                        backgroundColor: Color(0xFF136AF6),
                       ),
                     );
                     _commentController.clear();
@@ -800,7 +873,7 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                 icon: const Icon(
                   Icons.send,
                   color: Colors.white,
-                  size: 20,
+                  size: 22,
                 ),
               ),
             ),

@@ -76,48 +76,71 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F7F8),
       body: SafeArea(
         child: Column(
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF136AF6),
+                    const Color(0xFF136AF6).withOpacity(0.8),
+                  ],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.menu),
-                    color: const Color(0xFF111318),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                    ),
                   ),
                   const Expanded(
                     child: Text(
                       'Complaints',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF111318),
+                        color: Colors.white,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Filter',
-                      style: TextStyle(
-                        color: Color(0xFF136AF6),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextButton(
+                      onPressed: () {},
+                      child: const Text(
+                        'Filter',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -128,6 +151,7 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
             // Complaints List
             Expanded(
               child: ListView.builder(
+                padding: const EdgeInsets.all(20),
                 itemCount: _complaints.length,
                 itemBuilder: (context, index) {
                   final complaint = _complaints[index];
@@ -145,14 +169,22 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
                       );
                     },
                     child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Color(0xFFE5E7EB),
-                            width: 1,
-                          ),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.5,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,35 +337,60 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
 
             // Bottom bar
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: Color(0xFFE5E7EB),
-                    width: 1,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
                   ),
-                ),
+                ],
               ),
               child: Column(
                 children: [
-                  SizedBox(
+                  Container(
                     width: double.infinity,
-                    height: 48,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: _selectedComplaints.isEmpty
+                          ? null
+                          : const LinearGradient(
+                              colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                            ),
+                      color: _selectedComplaints.isEmpty
+                          ? const Color(0xFFE2E8F0)
+                          : null,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: _selectedComplaints.isEmpty
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: const Color(0xFF136AF6).withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                    ),
                     child: ElevatedButton(
                       onPressed: _selectedComplaints.isEmpty ? null : () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF136AF6),
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: Text(
                         'Bulk Assign (${_selectedComplaints.length} selected)',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                        style: TextStyle(
+                          color: _selectedComplaints.isEmpty
+                              ? const Color(0xFF64748B)
+                              : Colors.white,
+                          fontSize: 17,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -464,3 +521,4 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
     );
   }
 }
+

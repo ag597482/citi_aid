@@ -56,111 +56,146 @@ class _AssignAgentPageState extends State<AssignAgentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F8),
-      body: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back),
-                  color: const Color(0xFF111318),
-                ),
-                const Expanded(
-                  child: Text(
-                    'Assign Agent',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111318),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 48),
-              ],
-            ),
-          ),
-
-          // Search bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Container(
-              height: 48,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F7F8),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 16),
-                    child: Icon(
-                      Icons.search,
-                      color: Color(0xFF5F708C),
-                      size: 20,
-                    ),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Search by name, department...',
-                        hintStyle: TextStyle(color: Color(0xFF5F708C)),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF111318),
-                      ),
-                    ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF136AF6),
+                    const Color(0xFF136AF6).withOpacity(0.8),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-            ),
-          ),
-
-          // View toggle
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F7F8),
-                borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Assign Agent',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
               ),
+            ),
+
+            // Search bar
+            Container(
+              padding: const EdgeInsets.all(20),
+              color: Colors.white,
+              child: Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F7F8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: Icon(
+                        Icons.search,
+                        color: Color(0xFF136AF6),
+                        size: 22,
+                      ),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: const InputDecoration(
+                          hintText: 'Search by name, department...',
+                          hintStyle: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 15,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                        ),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF1E293B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // View toggle
+            Container(
+              padding: const EdgeInsets.all(20),
+              color: Colors.white,
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F7F8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
+                ),
               child: Row(
                 children: [
                   Expanded(
                     child: GestureDetector(
                       onTap: () => setState(() => _selectedView = 'Suggested Agents'),
                       child: Container(
-                        height: 40,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: _selectedView == 'Suggested Agents' ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
+                          gradient: _selectedView == 'Suggested Agents'
+                              ? const LinearGradient(
+                                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                                )
+                              : null,
+                          color: _selectedView == 'Suggested Agents' ? null : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: _selectedView == 'Suggested Agents'
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 2,
+                                    color: const Color(0xFF136AF6).withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ]
                               : null,
@@ -169,11 +204,11 @@ class _AssignAgentPageState extends State<AssignAgentPage> {
                           child: Text(
                             'Suggested Agents',
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                               color: _selectedView == 'Suggested Agents'
-                                  ? const Color(0xFF136AF6)
-                                  : const Color(0xFF5F708C),
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
                             ),
                           ),
                         ),
@@ -184,15 +219,21 @@ class _AssignAgentPageState extends State<AssignAgentPage> {
                     child: GestureDetector(
                       onTap: () => setState(() => _selectedView = 'All Agents'),
                       child: Container(
-                        height: 40,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: _selectedView == 'All Agents' ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
+                          gradient: _selectedView == 'All Agents'
+                              ? const LinearGradient(
+                                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                                )
+                              : null,
+                          color: _selectedView == 'All Agents' ? null : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: _selectedView == 'All Agents'
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 2,
+                                    color: const Color(0xFF136AF6).withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ]
                               : null,
@@ -201,11 +242,11 @@ class _AssignAgentPageState extends State<AssignAgentPage> {
                           child: Text(
                             'All Agents',
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                               color: _selectedView == 'All Agents'
-                                  ? const Color(0xFF136AF6)
-                                  : const Color(0xFF5F708C),
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
                             ),
                           ),
                         ),
@@ -240,16 +281,22 @@ class _AssignAgentPageState extends State<AssignAgentPage> {
                 final agent = _agents[index - 1];
 
                 return Container(
-                  padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-                  decoration: const BoxDecoration(
+                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFFE5E7EB),
-                        width: 1,
-                      ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -295,25 +342,39 @@ class _AssignAgentPageState extends State<AssignAgentPage> {
                           ],
                         ),
                       ),
-                      SizedBox(
-                        width: 80,
-                        height: 40,
+                      Container(
+                        width: 100,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF136AF6).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
                         child: ElevatedButton(
                           onPressed: () {
                             _showAssignmentDialog(agent);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF136AF6),
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: const Text(
                             'Assign',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -325,77 +386,104 @@ class _AssignAgentPageState extends State<AssignAgentPage> {
             ),
           ),
 
-          // Bottom bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 1,
-                ),
+            // Bottom bar
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 56,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                color: Color(0xFF136AF6),
+                                width: 2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Back',
+                              style: TextStyle(
+                                color: Color(0xFF136AF6),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF136AF6).withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Agent assigned successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Confirm Assignment',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF136AF6)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Back',
-                          style: TextStyle(
-                            color: Color(0xFF136AF6),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Agent assigned successfully!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF136AF6),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Confirm Assignment',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

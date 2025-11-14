@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   void _openFacebookPage() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const FacebookPage(),
+        builder: (context) => SecretPage(),
       ),
     );
   }

@@ -1,55 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Empty Facebook Page
-class FacebookPage extends StatelessWidget {
-  const FacebookPage({super.key});
+class SecretPage extends StatefulWidget {
+  @override
+  _SecretPageState createState() => _SecretPageState();
+}
+
+class _SecretPageState extends State<SecretPage> {
+  final TextEditingController _keyController = TextEditingController();
+  final TextEditingController _valueController = TextEditingController();
+  Map<String, Object> _storageData = {};
+
+  Future<void> _saveData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String key = _keyController.text;
+    String value = _valueController.text;
+    if (key.isNotEmpty) {
+      await prefs.setString(key, value);
+      await _loadAllData();
+      _keyController.clear();
+      _valueController.clear();
+    }
+  }
+
+  Future<void> _loadAllData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _storageData = prefs.getKeys().fold<Map<String, Object>>(
+        {},
+        (map, k) {
+          map[k] = prefs.get(k) ?? '';
+          return map;
+        },
+      );
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAllData();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1E293B),
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Facebook',
-          style: TextStyle(
-            color: Color(0xFF1E293B),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: Center(
+      appBar: AppBar(title: Text("SecretPage")),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.facebook,
-              size: 80,
-              color: const Color(0xFF1877F2).withOpacity(0.3),
+            TextField(
+              controller: _keyController,
+              decoration: InputDecoration(labelText: 'Key'),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Facebook Page',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E293B).withOpacity(0.7),
-              ),
+            SizedBox(height: 8),
+            TextField(
+              controller: _valueController,
+              decoration: InputDecoration(labelText: 'Value'),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'This page is empty',
-              style: TextStyle(
-                fontSize: 16,
-                color: const Color(0xFF64748B),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _saveData,
+              child: Text("Save"),
+            ),
+            SizedBox(height: 16),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _loadAllData,
+                child: ListView.builder(
+                  itemCount: _storageData.length,
+                  itemBuilder: (context, idx) {
+                    String key = _storageData.keys.elementAt(idx);
+                    return ListTile(
+                      title: Text(key),
+                      subtitle: Text(_storageData[key].toString()),
+                    );
+                  },
+                ),
               ),
             ),
           ],

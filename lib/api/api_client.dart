@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_response.dart';
@@ -317,6 +318,56 @@ class ApiClient {
       final formData = FormData.fromMap({
         fieldName: await MultipartFile.fromFile(
           file.path,
+          filename: fileName,
+        ),
+        if (additionalData != null) ...additionalData,
+      });
+
+      final response = await _dio.post(
+        endpoint,
+        data: formData,
+        options: Options(headers: headers),
+        cancelToken: cancelToken,
+        onSendProgress: onSendProgress,
+      );
+
+      return _handleResponse<T>(response, fromJson);
+    } on DioException catch (e) {
+      return _handleError<T>(e);
+    } catch (e) {
+      return ApiResponse<T>(
+        success: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  /// Upload file from bytes (for web compatibility)
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await apiClient.uploadFileFromBytes(
+  ///   '/api/images/upload',
+  ///   bytes: imageBytes,
+  ///   fileName: 'image.jpg',
+  ///   fieldName: 'file',
+  /// );
+  /// ```
+  Future<ApiResponse<T>> uploadFileFromBytes<T>(
+    String endpoint, {
+    required Uint8List bytes,
+    required String fileName,
+    String fieldName = 'file',
+    Map<String, dynamic>? additionalData,
+    Map<String, String>? headers,
+    T Function(dynamic)? fromJson,
+    CancelToken? cancelToken,
+    void Function(int, int)? onSendProgress,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        fieldName: MultipartFile.fromBytes(
+          bytes,
           filename: fileName,
         ),
         if (additionalData != null) ...additionalData,

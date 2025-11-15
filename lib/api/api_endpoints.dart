@@ -35,5 +35,8 @@ class ApiEndpoints {
   // ==================== Admin Endpoints ====================
   static const String adminStats = '/admin/stats';
   static const String adminUsers = '/admin/users';
+  
+  // ==================== Image Upload Endpoints ====================
+  static const String imageUpload = '/api/images/upload';
 }
 

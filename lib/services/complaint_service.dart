@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../api/api_client.dart';
 import '../api/api_response.dart';
 import '../api/api_endpoints.dart';
+import '../services/auth_service.dart';
 
 /// Complaint Service
 /// Handles all complaint-related API calls
@@ -40,34 +43,50 @@ class ComplaintService {
   /// Example:
   /// ```dart
   /// final response = await complaintService.createComplaint(
-  ///   title: 'Power outage',
-  ///   description: 'No electricity for 2 days',
-  ///   category: 'Electricity',
-  ///   priority: 'High',
-  ///   latitude: 28.6139,
-  ///   longitude: 77.2090,
+  ///   title: 'pothole in street',
+  ///   description: 'big hole in street',
+  ///   location: 'new orr in hsr',
+  ///   department: 'ELECTRICITY',
+  ///   severity: 'LOW',
+  ///   beforePhoto: 'base64_encoded_string', // optional
   /// );
   /// ```
   Future<ApiResponse<Map<String, dynamic>>> createComplaint({
     required String title,
     required String description,
-    required String category,
-    required String priority,
-    double? latitude,
-    double? longitude,
-    String? imageUrl,
+    required String location,
+    required String department, // ELECTRICITY, POTHOLES, DRAINAGE, GARBAGE, etc.
+    required String severity, // LOW, MEDIUM, HIGH
+    String? beforePhoto, // Optional base64 encoded image string
   }) async {
+    // Get customerId from local storage
+    final authService = AuthService();
+    final user = await authService.getStoredUser();
+    
+    if (user == null || !user.isCustomer) {
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        error: 'User not logged in or not a customer',
+      );
+    }
+
+    final body = <String, dynamic>{
+      'title': title,
+      'description': description,
+      'location': location,
+      'department': department,
+      'severity': severity,
+      'customerId': user.id,
+    };
+
+    // Add beforePhoto if provided
+    if (beforePhoto != null && beforePhoto.isNotEmpty) {
+      body['beforePhoto'] = beforePhoto;
+    }
+
     return await _api.post<Map<String, dynamic>>(
       ApiEndpoints.complaints,
-      body: {
-        'title': title,
-        'description': description,
-        'category': category,
-        'priority': priority,
-        if (latitude != null) 'latitude': latitude,
-        if (longitude != null) 'longitude': longitude,
-        if (imageUrl != null) 'imageUrl': imageUrl,
-      },
+      body: body,
     );
   }
 
@@ -142,6 +161,51 @@ class ComplaintService {
       additionalData: {'complaintId': complaintId},
       onSendProgress: onProgress,
     );
+  }
+
+  /// Upload image to get URL for beforePhoto field
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await complaintService.uploadImage(
+  ///   imageFile: File('/path/to/image.jpg'),
+  /// );
+  /// 
+  /// if (response.success) {
+  ///   final url = response.data!['url'] as String;
+  ///   // Use url in beforePhoto field
+  /// }
+  /// ```
+  Future<ApiResponse<Map<String, dynamic>>> uploadImage({
+    dynamic imageFile, // Use dynamic to accept both dart:io.File and stub File
+    Uint8List? imageBytes,
+    String? fileName,
+    void Function(int, int)? onProgress,
+  }) async {
+    if (kIsWeb && imageBytes != null) {
+      // For web, use bytes upload
+      return await _api.uploadFileFromBytes<Map<String, dynamic>>(
+        ApiEndpoints.imageUpload,
+        bytes: imageBytes,
+        fileName: fileName ?? 'image.jpg',
+        fieldName: 'file',
+        onSendProgress: onProgress,
+      );
+    } else if (imageFile != null && !kIsWeb) {
+      // For non-web platforms, use file upload
+      // Cast to File for the API call
+      return await _api.uploadFile<Map<String, dynamic>>(
+        ApiEndpoints.imageUpload,
+        file: imageFile as File,
+        fieldName: 'file',
+        onSendProgress: onProgress,
+      );
+    } else {
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        error: 'Either imageFile or imageBytes must be provided',
+      );
+    }
   }
 }
 

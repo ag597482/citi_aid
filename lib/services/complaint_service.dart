@@ -95,14 +95,24 @@ class ComplaintService {
     required String id,
     String? title,
     String? description,
+    String? location,
+    String? beforePhoto,
+    String? afterPhoto,
+    String? department,
+    String? severity,
     String? status,
-    String? priority,
+    String? agentId,
   }) async {
     final body = <String, dynamic>{};
     if (title != null) body['title'] = title;
     if (description != null) body['description'] = description;
+    if (location != null) body['location'] = location;
+    if (beforePhoto != null) body['beforePhoto'] = beforePhoto;
+    if (afterPhoto != null) body['afterPhoto'] = afterPhoto;
+    if (department != null) body['department'] = department;
+    if (severity != null) body['severity'] = severity;
     if (status != null) body['status'] = status;
-    if (priority != null) body['priority'] = priority;
+    if (agentId != null) body['agentId'] = agentId;
 
     return await _api.put<Map<String, dynamic>>(
       ApiEndpoints.complaintById(id),

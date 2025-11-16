@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../services/complaint_service.dart';
+import '../services/auth_service.dart';
+import '../api/api_config.dart';
+import 'edit_complaint.dart';
+import 'feed_page.dart';
 
 class ComplaintDetailPage extends StatefulWidget {
   final dynamic complaintId;
@@ -15,12 +21,95 @@ class ComplaintDetailPage extends StatefulWidget {
 }
 
 class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
-  final TextEditingController _commentController = TextEditingController();
+  final ComplaintService _complaintService = ComplaintService();
+  final AuthService _authService = AuthService();
+  
+  Map<String, dynamic>? _complaint;
+  bool _isLoading = true;
+  String? _error;
+  String? _currentUserId;
+  String? _baseUrl;
 
   @override
-  void dispose() {
-    _commentController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadComplaint();
+    _loadCurrentUser();
+    _loadBaseUrl();
+  }
+
+  Future<void> _loadBaseUrl() async {
+    final url = await ApiConfig.getBaseUrl();
+    setState(() {
+      _baseUrl = url;
+    });
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final user = await _authService.getStoredUser();
+    setState(() {
+      _currentUserId = user?.id;
+    });
+  }
+
+  Future<void> _loadComplaint() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final response = await _complaintService.getComplaintById(
+        widget.complaintId.toString(),
+      );
+
+      if (response.success && response.data != null) {
+        setState(() {
+          _complaint = response.data;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = response.error ?? 'Failed to load complaint';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Error loading complaint: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _getImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) return '';
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    final baseUrl = _baseUrl ?? 'http://localhost:8080';
+    return '$baseUrl$imagePath';
+  }
+
+  String _formatDateTime(String? dateTimeStr) {
+    if (dateTimeStr == null) return '';
+    try {
+      final dateTime = DateTime.parse(dateTimeStr);
+      return DateFormat('MMM d, yyyy, h:mm a').format(dateTime);
+    } catch (e) {
+      return dateTimeStr;
+    }
+  }
+
+  bool _isComplaintCreator() {
+    if (_complaint == null || _currentUserId == null) return false;
+    final customer = _complaint!['customer'] as Map<String, dynamic>?;
+    if (customer == null) return false;
+    return customer['id'] == _currentUserId;
+  }
+
+  bool _hasAgent() {
+    return _complaint != null && _complaint!['agent'] != null;
   }
 
   @override
@@ -87,174 +176,215 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
 
             // Content
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Content Header
-                    Text(
-                      'Large Pothole on Main Street',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1C1C1E),
-                        letterSpacing: -0.015,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          height: 28,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF9500).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _error!,
+                                style: const TextStyle(color: Colors.red),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadComplaint,
+                                child: const Text('Retry'),
+                              ),
+                            ],
                           ),
-                          child: const Center(
-                            child: Text(
-                              'Road Hazard',
-                              style: TextStyle(
-                                color: Color(0xFFFF9500),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                        )
+                      : _complaint == null
+                          ? const Center(child: Text('No complaint data'))
+                          : SingleChildScrollView(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Content Header
+                                  Text(
+                                    _complaint!['title'] ?? 'Untitled',
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1C1C1E),
+                                      letterSpacing: -0.015,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        height: 28,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFF9500).withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            _complaint!['department'] ?? 'Unknown',
+                                            style: const TextStyle(
+                                              color: Color(0xFFFF9500),
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 64,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: _getSeverityColor(_complaint!['severity']),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            '${_complaint!['severity'] ?? 'Unknown'} Severity',
+                                            style: TextStyle(
+                                              color: _getSeverityColor(_complaint!['severity']),
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 24),
+
+                                  // Media Carousel
+                                  if (_complaint!['beforePhoto'] != null)
+                                    SizedBox(
+                                      height: 200,
+                                      child: ListView(
+                                        scrollDirection: Axis.horizontal,
+                                        children: [
+                                          Container(
+                                            width: 280,
+                                            margin: const EdgeInsets.only(right: 12),
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(8),
+                                              image: DecorationImage(
+                                                image: NetworkImage(
+                                                  _getImageUrl(_complaint!['beforePhoto']),
+                                                ),
+                                                fit: BoxFit.cover,
+                                                onError: (exception, stackTrace) {
+                                                  // Handle image load error
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          if (_complaint!['afterPhoto'] != null)
+                                            Container(
+                                              width: 280,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(8),
+                                                image: DecorationImage(
+                                                  image: NetworkImage(
+                                                    _getImageUrl(_complaint!['afterPhoto']),
+                                                  ),
+                                                  fit: BoxFit.cover,
+                                                  onError: (exception, stackTrace) {
+                                                    // Handle image load error
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+
+                                  const SizedBox(height: 24),
+
+                                  // Information Section
+                                  Column(
+                                    children: [
+                                      // Description
+                                      _buildInfoSection(
+                                        icon: Icons.description,
+                                        title: 'Description',
+                                        content: _complaint!['description'] ?? 'No description',
+                                      ),
+
+                                      const SizedBox(height: 16),
+
+                                      // Location
+                                      _buildInfoSection(
+                                        icon: Icons.location_on,
+                                        title: 'Location',
+                                        content: _complaint!['location'] ?? 'No location',
+                                      ),
+
+                                      const SizedBox(height: 16),
+
+                                      // Reporter
+                                      _buildInfoSection(
+                                        icon: Icons.person,
+                                        title: 'Reporter',
+                                        content: _getReporterInfo(),
+                                      ),
+
+                                      const SizedBox(height: 16),
+
+                                      // Assigned Agent
+                                      if (_hasAgent()) _buildAgentSection(),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 24),
+
+                                  // Status Timeline
+                                  _buildStatusTimeline(),
+
+                                  const SizedBox(height: 24),
+
+                                  // CTA Bar
+                                  if (_isComplaintCreator())
+                                    _buildCTABar(),
+                                ],
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Row(
-                          children: [
-                            Container(
-                              width: 64,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF3B30),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'High Severity',
-                              style: TextStyle(
-                                color: Color(0xFFFF3B30),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Media Carousel
-                    SizedBox(
-                      height: 200,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          Container(
-                            width: 280,
-                            margin: const EdgeInsets.only(right: 12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: const DecorationImage(
-                                image: NetworkImage(
-                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDVPuKtGw8WvZDcQ2SW5qB1QUaGWn42xIyeyR2lIVEDKPkI8TCQr5c5bed6rZMjSdTr1niMM7OOB_RWUn6WPRkC4ATExE4rijLHVzGyXHibKBnJPnxsvC2N_aNNqNHYXUkaEGvHqUgtREUXIPyQsJbsc_sGmJO8_Xup7RLji4ANfD3eoT_2uP8ecb2X0GeXKYfG0-Ff82sShMvFDlTcT4lIfS0RYj0gZfzql1557bUT8uunCiyXWeJ8MY3bhQTH90ieLR87iK14XQ',
-                                ),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 280,
-                            margin: const EdgeInsets.only(right: 12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: const DecorationImage(
-                                image: NetworkImage(
-                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuAThlNIC0OT6PUA9tB2Z4_0BLkD4MyuRmn11bUgsh4DvJK5wbb9MPQ43_HyfnlDfJQsk1xZ66W6mVBHBNI58bjOLjsmY8yaCuykDFfXC_i0-cbIFBt0fBF8_kLl1zWCJxRijsbR8S5G5g77AICJbopSWArkOtDxrdMTdY5b8Mk6XCLxOnTmVhcsPKi8GSjq0T8zdIy4konLXIJnQJIH9tt545lwV86I3NjpcevWJk2w-ztfS1TW5Hf9knmvBERc5X_6yfxj9kCdPA',
-                                ),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 280,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1F2937),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.play_circle,
-                                color: Colors.white,
-                                size: 60,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Information Section
-                    Column(
-                      children: [
-                        // Description
-                        _buildInfoSection(
-                          icon: Icons.description,
-                          title: 'Description',
-                          content: 'There is a large pothole in the middle of Main Street, right in front of the public library. It has been there for a week and is getting bigger. It\'s a danger to cars and cyclists.',
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Location
-                        _buildLocationSection(),
-
-                        const SizedBox(height: 16),
-
-                        // Reporter
-                        _buildInfoSection(
-                          icon: Icons.person,
-                          title: 'Reporter',
-                          content: 'Reported 2 days ago by Jane P.',
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Assigned Agent
-                        _buildAgentSection(),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Status Timeline
-                    _buildStatusTimeline(),
-
-                    const SizedBox(height: 24),
-
-                    // CTA Bar
-                    _buildCTABar(),
-
-                    const SizedBox(height: 24),
-
-                    // Comments Section
-                    _buildCommentsSection(),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Color _getSeverityColor(String? severity) {
+    switch (severity?.toUpperCase()) {
+      case 'HIGH':
+        return const Color(0xFFFF3B30);
+      case 'MEDIUM':
+        return const Color(0xFFFF9500);
+      case 'LOW':
+        return const Color(0xFF34C759);
+      default:
+        return const Color(0xFF8E8E93);
+    }
+  }
+
+  String _getReporterInfo() {
+    if (_complaint == null) return 'Unknown';
+    final customer = _complaint!['customer'] as Map<String, dynamic>?;
+    if (customer == null) return 'Unknown';
+    final name = customer['name'] as String? ?? 'Unknown';
+    final createdAt = _complaint!['createdAt'] as String?;
+    if (createdAt != null) {
+      final dateTime = _formatDateTime(createdAt);
+      return 'Reported on $dateTime by $name';
+    }
+    return 'Reported by $name';
   }
 
   Widget _buildInfoSection({
@@ -306,96 +436,19 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
     );
   }
 
-  Widget _buildLocationSection() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F7F8),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(
-            Icons.location_on,
-            color: Color(0xFF8E8E93),
-            size: 24,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Location',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1C1C1E),
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '123 Main St, Anytown, USA',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF8E8E93),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                height: 128,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  image: const DecorationImage(
-                    image: NetworkImage(
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDjAKMGwvog-7UpKQtMECqFGwd6XEIKbgmNlJ8xX8CiNtNSJHH7utnU81NedpPpZVJ1AQHfGNN4cmeQvon0gI0mOX-0kFW9czy39ySnE2yX2Rg4YtwScEkfyoCG2hZqZYQMUFUPRfUb0jX7EaMUJHaKjKCaQmYiFqhvIZkU0jbgt2SvESGldpc70zgUh1LF5jv2-qDCs4Sh__IjVZPNoMcbS5bX73KQKqTjStcLL-et0uxUYDDOtQOQk3teHgdZjfvpzdbAwgfDEA',
-                    ),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 40,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Opening in Maps...'),
-                        backgroundColor: Color(0xFF007AFF),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF007AFF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Open in Maps',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildAgentSection() {
+    if (_complaint == null || !_hasAgent()) return const SizedBox.shrink();
+    
+    final agent = _complaint!['agent'];
+    String agentName = 'Unknown Agent';
+    
+    if (agent is Map<String, dynamic>) {
+      agentName = agent['name'] as String? ?? 'Unknown Agent';
+    } else if (agent is String) {
+      agentName = agent;
+    }
+    
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -426,9 +479,9 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Assigned to John Smith (Public Works)',
-                style: TextStyle(
+              Text(
+                'Assigned to $agentName',
+                style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF8E8E93),
                 ),
@@ -470,6 +523,32 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
   }
 
   Widget _buildStatusTimeline() {
+    if (_complaint == null) return const SizedBox.shrink();
+    
+    final List<Map<String, String>> timelineItems = [];
+    
+    // Add Completed status if exists
+    if (_complaint!['completedAt'] != null) {
+      timelineItems.add({
+        'title': 'Completed',
+        'date': _formatDateTime(_complaint!['completedAt']),
+      });
+    }
+    
+    // Add Assigned status if exists
+    if (_complaint!['assignedAt'] != null) {
+      timelineItems.add({
+        'title': 'Agent Assigned',
+        'date': _formatDateTime(_complaint!['assignedAt']),
+      });
+    }
+    
+    // Add Created status (always exists)
+    timelineItems.add({
+      'title': 'Submitted',
+      'date': _formatDateTime(_complaint!['createdAt']),
+    });
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -482,28 +561,33 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
           ),
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.only(left: 32),
-          child: Column(
-            children: [
-              _buildTimelineItem(
-                title: 'Agent Assigned',
-                date: 'Mar 17, 2024, 10:00 AM',
-                description: '"John Smith from Public Works has been assigned to this issue."',
-              ),
-              const SizedBox(height: 24),
-              _buildTimelineItem(
-                title: 'Acknowledged',
-                date: 'Mar 16, 2024, 2:30 PM',
-              ),
-              const SizedBox(height: 24),
-              _buildTimelineItem(
-                title: 'Submitted',
-                date: 'Mar 15, 2024, 9:05 AM',
-              ),
-            ],
+        if (timelineItems.isEmpty)
+          const Text(
+            'No status history available',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF8E8E93),
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.only(left: 32),
+            child: Column(
+              children: timelineItems.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                return Column(
+                  children: [
+                    _buildTimelineItem(
+                      title: item['title']!,
+                      date: item['date']!,
+                    ),
+                    if (index < timelineItems.length - 1) const SizedBox(height: 24),
+                  ],
+                );
+              }).toList(),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -565,6 +649,8 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
   }
 
   Widget _buildCTABar() {
+    if (!_isComplaintCreator()) return const SizedBox.shrink();
+    
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: const BoxDecoration(
@@ -573,386 +659,184 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
           bottom: BorderSide(color: Color(0xFF8E8E93), width: 0.2),
         ),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF136AF6).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Sharing complaint...'),
-                          backgroundColor: Color(0xFF136AF6),
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1.5,
+                ),
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  if (_complaint != null) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => EditComplaintPage(
+                          complaintId: _complaint!['id'] as String,
+                          complaint: _complaint!,
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.share, size: 18),
-                    label: const Text('Share'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
+                    ).then((updated) {
+                      if (updated == true) {
+                        _loadComplaint(); // Reload complaint data
+                      }
+                    });
+                  }
+                },
+                icon: const Icon(Icons.edit, size: 18, color: Color(0xFF136AF6)),
+                label: const Text('Edit', style: TextStyle(color: Color(0xFF136AF6))),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Following complaint...'),
-                          backgroundColor: Color(0xFF136AF6),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.notifications, size: 18, color: Color(0xFF136AF6)),
-                    label: const Text('Follow', style: TextStyle(color: Color(0xFF136AF6))),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Reporting duplicate...'),
-                          backgroundColor: Color(0xFF136AF6),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.control_point_duplicate, size: 18, color: Color(0xFF136AF6)),
-                    label: const Text('Report Duplicate', style: TextStyle(color: Color(0xFF136AF6))),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Editing complaint...'),
-                          backgroundColor: Color(0xFF136AF6),
-                        ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.red.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Delete Complaint'),
+                        content: const Text('Are you sure you want to delete this complaint? This action cannot be undone.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              // Store navigator reference before async operations
+                              final navigator = Navigator.of(context, rootNavigator: true);
+                              final scaffoldMessenger = ScaffoldMessenger.of(context);
+                              
+                              // Close the confirmation dialog
+                              navigator.pop();
+                              
+                              if (_complaint != null) {
+                                final complaintId = _complaint!['id'] as String;
+                                
+                                // Show loading indicator using root navigator
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (dialogContext) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                                
+                                try {
+                                  final response = await _complaintService.deleteComplaint(complaintId);
+                                  
+                                  // Close loading indicator
+                                  if (mounted) {
+                                    navigator.pop();
+                                  }
+                                  
+                                  if (mounted) {
+                                    if (response.success) {
+                                      // Get the success message before navigation
+                                      final successMessage = response.data?['message'] as String? ?? 
+                                                             'Complaint deleted successfully';
+                                      
+                                      // Navigate to feed page first
+                                      navigator.pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                          builder: (newContext) {
+                                            // Show success message after navigation completes
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              ScaffoldMessenger.of(newContext).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(successMessage),
+                                                  backgroundColor: Colors.green,
+                                                  duration: const Duration(seconds: 2),
+                                                ),
+                                              );
+                                            });
+                                            return const FeedPage();
+                                          },
+                                        ),
+                                        (route) => false, // Remove all previous routes
+                                      );
+                                    } else {
+                                      scaffoldMessenger.showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            response.error ?? 
+                                            response.data?['message'] as String? ?? 
+                                            'Failed to delete complaint'
+                                          ),
+                                          backgroundColor: Colors.red,
+                                          duration: const Duration(seconds: 3),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                } catch (e) {
+                                  // Close loading indicator if still open
+                                  if (mounted) {
+                                    navigator.pop();
+                                  }
+                                  
+                                  if (mounted) {
+                                    scaffoldMessenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error deleting complaint: $e'),
+                                        backgroundColor: Colors.red,
+                                        duration: const Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                            child: const Text(
+                              'Delete',
+                              style: TextStyle(color: Color(0xFFFF3B30)),
+                            ),
+                          ),
+                        ],
                       );
                     },
-                    icon: const Icon(Icons.edit, size: 18, color: Color(0xFF136AF6)),
-                    label: const Text('Edit', style: TextStyle(color: Color(0xFF136AF6))),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
+                  );
+                },
+                icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                label: const Text('Delete Complaint', style: TextStyle(color: Colors.red)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.red.withOpacity(0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Close Complaint'),
-                            content: const Text('Are you sure you want to close this complaint?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Complaint closed'),
-                                      backgroundColor: Color(0xFFFF3B30),
-                                    ),
-                                  );
-                                },
-                                child: const Text(
-                                  'Close',
-                                  style: TextStyle(color: Color(0xFFFF3B30)),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    icon: const Icon(Icons.close, size: 18, color: Colors.red),
-                    label: const Text('Close Complaint', style: TextStyle(color: Colors.red)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCommentsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Comments (3)',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1C1C1E),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildComment(
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCVe9BFBaBWDfcx1d6G5lM6piASMoa1wA1LeLElC8AuSJ9-KJTCQutjhLRNBrIQhtUXAXu0KPwYoJS2XdW2x_qT-6j35wHs1FNzatvX7SQ-ZhixrxbNqEdpKfnD5KsWBuweoB_frKRl1U-ybNg21t8M4eK2Oirt5HLJL91wJUE4arhTTuJG4TjJjPjKxbsAj523HRxq-cwhPrvB2IoUNmBPsCj-hVlaY7R8UHbwL0n_pGdLRvk1a2ACil60_o-C8zYA5QeTU_gzeQ',
-          name: 'Alex R.',
-          comment: 'Thanks for reporting this! I almost blew a tire here yesterday.',
-          time: '1 day ago',
-        ),
-        const SizedBox(height: 16),
-        _buildComment(
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC8XFswwAX9Elc_i7nJQWcm1NTS0wYZ-JnYkbFVBPFyBhDR77Yh-GV0yrmxdSLRHy0zsEY-QUGWvRsLSs6TOhyAg82n_J8pZ0gcRu8oqWSi5fWW9d8-0w82WSBccmBdzVcUvx8yAYgpjva5EK_opYVhD8Um20jxHCveDj-TcYpSfaiDjVqQynr5bY-8gff8V1dB0VoPh1cR9O-KmpszItY53HpNSIq0RfAmZVB4Ky_VdNOMr-EKFLqKmHhjo9_NS601CRC2ujsPCw',
-          name: 'Maria G.',
-          comment: 'I called the city about this too. Glad to see it\'s officially logged.',
-          time: '18 hours ago',
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                image: const DecorationImage(
-                  image: NetworkImage(
-                    'https://lh3.googleusercontent.com/aida-public/AB6AXuAagrQyHhPz1-7x9B5FveKAc1PGr2QQtJjEfOtfomcMJOn6RBBOyxaeF67GP2hcB7d84M4rEU4TW60Chr6RjkPLAgQSuDzmTSUveZArlH8XFLzDlJPpDE6zFRFlJGP7yLLqAQNOaCZQmVpgfBINtcDwuRz9rTGtuqXVIlo2YqdtlcAqAK-eMV-SjNRSOljFqMIkH38Zaj0u3UQr48p0wza6a0QDv1AlycAUfSraHkT5wWJ3ciuekZ124V537yUss10lCEMFZrbeSQ',
-                  ),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextField(
-                controller: _commentController,
-                decoration: const InputDecoration(
-                  hintText: 'Add a comment...',
-                  hintStyle: TextStyle(color: Color(0xFF8E8E93)),
-                  filled: true,
-                  fillColor: Color(0xFFF5F7F8),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF136AF6).withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                onPressed: () {
-                  if (_commentController.text.isNotEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Comment added!'),
-                        backgroundColor: Color(0xFF136AF6),
-                      ),
-                    );
-                    _commentController.clear();
-                  }
-                },
-                icon: const Icon(
-                  Icons.send,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildComment({
-    required String avatar,
-    required String name,
-    required String comment,
-    required String time,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            image: DecorationImage(
-              image: NetworkImage(avatar),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F7F8),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(0),
-                    topRight: Radius.circular(8),
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF1C1C1E),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      comment,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF8E8E93),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                time,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF8E8E93),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }

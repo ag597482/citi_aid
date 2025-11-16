@@ -71,8 +71,21 @@ class AuthService {
         await _api.setAuthToken(token);
       }
 
+      // Preserve existing email and phone from local storage if they exist
+      final existingUserData = await _api.getUser();
+      if (existingUserData != null) {
+        // Merge existing email and phone into new data if not present in response
+        if (existingUserData['email'] != null && data['email'] == null) {
+          data['email'] = existingUserData['email'];
+        }
+        if (existingUserData['phone'] != null && data['phone'] == null) {
+          data['phone'] = existingUserData['phone'];
+        }
+      }
+
       // Save user data to SharedPreferences with key "user"
       // The response data contains: id, name, userType, message, success
+      // Now also includes preserved email and phone if they existed
       await _api.saveUser(data);
     }
 
@@ -120,8 +133,17 @@ class AuthService {
         data['userType'] = 'CUSTOMER';
       }
       
+      // Ensure email and phone are included in saved data
+      // (API response might not include phone, so we add it from the request)
+      if (!data.containsKey('email')) {
+        data['email'] = email;
+      }
+      if (!data.containsKey('phone')) {
+        data['phone'] = phone;
+      }
+      
       // Save user data to SharedPreferences with key "user"
-      // The response data contains: id, name, email, message, success, userType
+      // The response data contains: id, name, email, phone, message, success, userType
       await _api.saveUser(data);
     }
 

@@ -36,5 +36,12 @@ class CustomerService {
       fromJson: (json) => json is List ? json : [],
     );
   }
+
+  /// Get customer profile by ID (includes active and closed complaints)
+  Future<ApiResponse<Map<String, dynamic>>> getProfileById(String customerId) async {
+    return await _api.get<Map<String, dynamic>>(
+      ApiEndpoints.customerProfileById(customerId),
+    );
+  }
 }
 

@@ -15,27 +15,46 @@ class AgentService {
     );
   }
 
+  /// Get all agents (user endpoint)
+  Future<ApiResponse<List<dynamic>>> getAllUserAgents() async {
+    return await _api.get<List<dynamic>>(
+      ApiEndpoints.userAgents,
+      fromJson: (json) => json is List ? json : [],
+    );
+  }
+
   /// Get agent by ID
   Future<ApiResponse<Map<String, dynamic>>> getAgentById(String id) async {
     return await _api.get<Map<String, dynamic>>(ApiEndpoints.agentById(id));
   }
 
   /// Create new agent
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await agentService.createAgent(
+  ///   name: 'John Doe',
+  ///   phone: '1234567890',
+  ///   password: 'password123',
+  ///   document: 'document/path',
+  ///   department: 'ELECTRICITY',
+  /// );
+  /// ```
   Future<ApiResponse<Map<String, dynamic>>> createAgent({
-    required String identifier,
-    required String password,
     required String name,
-    String? phone,
-    String? department,
+    required String phone,
+    required String password,
+    required String document,
+    required String department,
   }) async {
     return await _api.post<Map<String, dynamic>>(
-      ApiEndpoints.agents,
+      ApiEndpoints.createAgent,
       body: {
-        'identifier': identifier,
-        'password': password,
         'name': name,
-        if (phone != null) 'phone': phone,
-        if (department != null) 'department': department,
+        'phone': phone,
+        'password': password,
+        'document': document,
+        'department': department,
       },
     );
   }

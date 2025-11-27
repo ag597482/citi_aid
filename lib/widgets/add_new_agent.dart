@@ -1,4 +1,16 @@
+import 'dart:typed_data';
+import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart' as file_picker;
+import '../services/agent_service.dart';
+import '../api/api_client.dart';
+import '../api/api_response.dart';
+
+// Import File only for non-web platforms
+import 'dart:io' if (dart.library.html) '../io_stub.dart' show File;
+import 'dart:io' as io;
 
 class AddNewAgentPage extends StatefulWidget {
   const AddNewAgentPage({super.key});
@@ -10,61 +22,382 @@ class AddNewAgentPage extends StatefulWidget {
 class _AddNewAgentPageState extends State<AddNewAgentPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController(text: 'Ag3ntP@ssw0rd!23');
-  final TextEditingController _additionalNotesController = TextEditingController();
   
-  String? _selectedDepartment;
-  final List<String> _selectedWards = [];
-  String _agentStatus = 'Active';
-  bool _sendInvite = false;
-  String _startTime = '09:00';
-  String _endTime = '17:00';
-  double _progress = 0.25;
+  String? _selectedDepartment; // Stores the enum value (e.g., 'ELECTRICITY')
+  bool _isLoading = false;
+  
+  // Document upload
+  dynamic _selectedDocument; // dart:io.File on non-web, null on web
+  Uint8List? _selectedDocumentBytes; // For web compatibility
+  String? _selectedDocumentName; // Document filename
+  final _agentService = AgentService();
+  final _imagePicker = ImagePicker();
+  final _api = ApiClient();
 
-  final List<String> _departments = [
-    'Select Department',
-    'Sanitation',
-    'Public Works',
-    'Water Management',
+  // Map department names to backend enum values
+  final List<Map<String, String>> _departments = [
+    {'name': 'Select Department', 'value': ''},
+    {'name': 'Electricity', 'value': 'ELECTRICITY'},
+    {'name': 'Potholes', 'value': 'POTHOLES'},
+    {'name': 'Drainage', 'value': 'DRAINAGE'},
+    {'name': 'Garbage', 'value': 'GARBAGE'},
+    {'name': 'Other', 'value': 'OTHER'},
   ];
 
-  final List<String> _availableWards = [
-    'Ward 1',
-    'Ward 2',
-    'Ward 3',
-    'Area 51',
-  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Add listeners to update progress when fields change
+    _fullNameController.addListener(_updateProgress);
+    _phoneController.addListener(_updateProgress);
+    _passwordController.addListener(_updateProgress);
+  }
 
   @override
   void dispose() {
+    _fullNameController.removeListener(_updateProgress);
+    _phoneController.removeListener(_updateProgress);
+    _passwordController.removeListener(_updateProgress);
     _fullNameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
     _passwordController.dispose();
-    _additionalNotesController.dispose();
     super.dispose();
+  }
+
+  /// Calculate progress based on filled fields
+  /// Each field contributes 20% (5 fields total: name, phone, password, department, document)
+  double get _progress {
+    double progress = 0.0;
+    
+    // Name filled (20%)
+    if (_fullNameController.text.trim().isNotEmpty) {
+      progress += 0.2;
+    }
+    
+    // Phone filled (20%)
+    if (_phoneController.text.trim().isNotEmpty) {
+      progress += 0.2;
+    }
+    
+    // Password filled (20%)
+    if (_passwordController.text.trim().isNotEmpty) {
+      progress += 0.2;
+    }
+    
+    // Department selected (20%)
+    if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
+      progress += 0.2;
+    }
+    
+    // Document uploaded (20%)
+    if (_selectedDocument != null || _selectedDocumentBytes != null) {
+      progress += 0.2;
+    }
+    
+    return progress.clamp(0.0, 1.0);
+  }
+
+  /// Update progress (triggers rebuild)
+  void _updateProgress() {
+    setState(() {
+      // Progress is calculated via getter, just trigger rebuild
+    });
+  }
+
+  /// Generate random password
+  String _generateRandomPassword() {
+    const String upperCase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const String lowerCase = 'abcdefghijklmnopqrstuvwxyz';
+    const String numbers = '0123456789';
+    const String special = '!@#\$%^&*()_+-=[]{}|;:,.<>?';
+    const String allChars = upperCase + lowerCase + numbers + special;
+    
+    final Random random = Random.secure();
+    final StringBuffer password = StringBuffer();
+    
+    // Ensure at least one of each type
+    password.write(upperCase[random.nextInt(upperCase.length)]);
+    password.write(lowerCase[random.nextInt(lowerCase.length)]);
+    password.write(numbers[random.nextInt(numbers.length)]);
+    password.write(special[random.nextInt(special.length)]);
+    
+    // Fill the rest randomly (total length 12)
+    for (int i = 4; i < 12; i++) {
+      password.write(allChars[random.nextInt(allChars.length)]);
+    }
+    
+    // Shuffle the password
+    final List<String> chars = password.toString().split('');
+    chars.shuffle(random);
+    return chars.join();
   }
 
   void _autoGeneratePassword() {
     setState(() {
-      _passwordController.text = 'Ag3ntP@ssw0rd!23';
+      _passwordController.text = _generateRandomPassword();
+      _updateProgress();
     });
   }
 
-  void _addWard(String ward) {
-    if (!_selectedWards.contains(ward)) {
-      setState(() {
-        _selectedWards.add(ward);
-      });
+  /// Pick document from device (supports images and PDFs)
+  Future<void> _pickDocument() async {
+    try {
+      if (kIsWeb) {
+        // For web, use file_picker
+        file_picker.FilePickerResult? result = await file_picker.FilePicker.platform.pickFiles(
+          type: file_picker.FileType.custom,
+          allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'],
+        );
+
+        if (result != null && result.files.single.bytes != null) {
+          setState(() {
+            _selectedDocumentBytes = result.files.single.bytes;
+            _selectedDocument = null;
+            _selectedDocumentName = result.files.single.name;
+            _updateProgress();
+          });
+        }
+      } else {
+        // For mobile, use file_picker for PDFs and image_picker for images
+        // Show dialog to choose between image and PDF
+        final source = await showModalBottomSheet<String>(
+          context: context,
+          builder: (context) => SafeArea(
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.image),
+                  title: const Text('Pick Image'),
+                  onTap: () => Navigator.pop(context, 'image'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.picture_as_pdf),
+                  title: const Text('Pick PDF'),
+                  onTap: () => Navigator.pop(context, 'pdf'),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        if (source == null) return;
+
+        if (source == 'image') {
+          // Use image picker for images
+          final XFile? pickedFile = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+            maxWidth: 1920,
+            maxHeight: 1920,
+            imageQuality: 85,
+          );
+
+          if (pickedFile != null) {
+            setState(() {
+              _selectedDocument = File(pickedFile.path);
+              _selectedDocumentBytes = null;
+              _selectedDocumentName = pickedFile.name;
+              _updateProgress();
+            });
+          }
+        } else {
+          // Use file picker for PDFs
+          file_picker.FilePickerResult? result = await file_picker.FilePicker.platform.pickFiles(
+            type: file_picker.FileType.custom,
+            allowedExtensions: ['pdf'],
+          );
+
+          if (result != null && result.files.single.path != null) {
+            setState(() {
+              _selectedDocument = File(result.files.single.path!);
+              _selectedDocumentBytes = null;
+              _selectedDocumentName = result.files.single.name;
+              _updateProgress();
+            });
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick document: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-  void _removeWard(String ward) {
-    setState(() {
-      _selectedWards.remove(ward);
-    });
+
+  /// Handle agent creation
+  Future<void> _handleCreate() async {
+    // Validate inputs
+    if (_fullNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter agent\'s full name'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_phoneController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter phone number'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedDepartment == null || _selectedDepartment!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a department'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please generate a password'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedDocument == null && _selectedDocumentBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please upload a document'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      String? documentPath;
+
+      // Upload document first (supports both images and PDFs)
+      if (_selectedDocument != null || _selectedDocumentBytes != null) {
+        final isPdf = _selectedDocumentName?.toLowerCase().endsWith('.pdf') ?? false;
+        
+        ApiResponse<Map<String, dynamic>> uploadResponse;
+        
+        if (kIsWeb) {
+          // For web, use bytes upload
+          final fileName = _selectedDocumentName ?? (isPdf ? 'document.pdf' : 'document.jpg');
+          uploadResponse = await _api.uploadFileFromBytes<Map<String, dynamic>>(
+            '/api/images/upload',
+            bytes: _selectedDocumentBytes!,
+            fileName: fileName,
+            fieldName: 'file',
+          );
+        } else {
+          // For mobile, use file upload
+          // Use io.File to explicitly reference dart:io.File
+          // ignore: avoid_dynamic_calls
+          final filePath = (_selectedDocument as dynamic).path as String;
+          final file = io.File(filePath);
+          uploadResponse = await _api.uploadFile<Map<String, dynamic>>(
+            '/api/images/upload',
+            file: file,
+            fieldName: 'file',
+          );
+        }
+
+        if (!uploadResponse.success) {
+          setState(() => _isLoading = false);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(uploadResponse.error ?? 'Failed to upload document. Please try again.'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+
+        // Extract path from response
+        if (uploadResponse.data != null) {
+          documentPath = uploadResponse.data!['url'] as String?;
+        }
+      }
+
+      if (documentPath == null) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to get document path. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Create agent with document path
+      final response = await _agentService.createAgent(
+        name: _fullNameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        password: _passwordController.text.trim(),
+        document: documentPath,
+        department: _selectedDepartment!,
+      );
+
+      setState(() => _isLoading = false);
+
+      // Extract message from response
+      String? message;
+      bool isSuccess = false;
+      
+      if (response.data != null) {
+        // New API format: response has success and message fields in data
+        final responseData = response.data as Map<String, dynamic>;
+        isSuccess = responseData['success'] == true;
+        message = responseData['message'] as String?;
+      } else {
+        // Fallback to ApiResponse wrapper
+        isSuccess = response.success;
+        message = response.error ?? 'Failed to create agent. Please try again.';
+      }
+
+      if (mounted) {
+        if (isSuccess) {
+          // Show success dialog with message
+          _showMessageDialog(message ?? 'Agent created successfully', true);
+        } else {
+          // Show error message in dialog (not snackbar)
+          _showMessageDialog(message ?? 'Failed to create agent. Please try again.', false);
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -130,11 +463,13 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
 
             // Progress bar
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               color: Colors.white,
               child: Column(
                 children: [
                   Container(
+                    width: double.infinity,
                     height: 8,
                     decoration: BoxDecoration(
                       color: const Color(0xFFE2E8F0),
@@ -184,12 +519,6 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
                         hintText: 'Enter phone number',
                         keyboardType: TextInputType.phone,
                       ),
-                      _buildTextField(
-                        label: 'Email Address',
-                        controller: _emailController,
-                        hintText: 'Enter email address',
-                        keyboardType: TextInputType.emailAddress,
-                      ),
                     ],
                   ),
 
@@ -224,7 +553,7 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  value: _selectedDepartment ?? 'Select Department',
+                                  value: _selectedDepartment ?? '',
                                   isExpanded: true,
                                   style: const TextStyle(
                                     fontSize: 16,
@@ -232,13 +561,14 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
                                   ),
                                   items: _departments.map((dept) {
                                     return DropdownMenuItem(
-                                      value: dept,
-                                      child: Text(dept),
+                                      value: dept['value']!,
+                                      child: Text(dept['name']!),
                                     );
                                   }).toList(),
                                   onChanged: (value) {
                                     setState(() {
                                       _selectedDepartment = value;
+                                      _updateProgress();
                                     });
                                   },
                                 ),
@@ -301,27 +631,6 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: _sendInvite,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _sendInvite = value ?? false;
-                                    });
-                                  },
-                                  activeColor: const Color(0xFF136AF6),
-                                ),
-                                const Text(
-                                  'Send Invite',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFF111318),
-                                  ),
-                                ),
-                              ],
-                            ),
                           ],
                         ),
                       ),
@@ -346,287 +655,103 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: const Color(0xFFDBDFE6),
-                                  width: 2,
-                                  style: BorderStyle.solid,
+                            GestureDetector(
+                              onTap: _pickDocument,
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xFFDBDFE6),
+                                    width: 2,
+                                    style: BorderStyle.solid,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                children: [
-                                  const Icon(
-                                    Icons.cloud_upload,
-                                    size: 48,
-                                    color: Color(0xFF9CA3AF),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Drag & drop files here or',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Color(0xFF5F708C),
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {},
-                                    child: const Text(
-                                      'Browse Files',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF136AF6),
+                                child: (_selectedDocument != null || _selectedDocumentBytes != null)
+                                    ? Column(
+                                        children: [
+                                          Icon(
+                                            _selectedDocumentName?.toLowerCase().endsWith('.pdf') ?? false
+                                                ? Icons.picture_as_pdf
+                                                : Icons.check_circle,
+                                            size: 48,
+                                            color: _selectedDocumentName?.toLowerCase().endsWith('.pdf') ?? false
+                                                ? Colors.red
+                                                : Colors.green,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            _selectedDocumentName ?? 'Document selected',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Color(0xFF111318),
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TextButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                _selectedDocument = null;
+                                                _selectedDocumentBytes = null;
+                                                _selectedDocumentName = null;
+                                                _updateProgress();
+                                              });
+                                            },
+                                            child: const Text(
+                                              'Remove',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Column(
+                                        children: [
+                                          const Icon(
+                                            Icons.cloud_upload,
+                                            size: 48,
+                                            color: Color(0xFF9CA3AF),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          const Text(
+                                            'Tap to upload document',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Color(0xFF5F708C),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          const Text(
+                                            'Supported formats: PDF, JPG, PNG, GIF, WEBP, BMP',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF5F708C),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ),
-                                  const Text(
-                                    'Supported formats: PDF, JPG, PNG',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF5F708C),
-                                    ),
-                                  ),
-                                ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            // Example uploaded files
-                            _buildUploadedFile('agent_id.pdf'),
-                            const SizedBox(height: 8),
-                            _buildUploadedFile('clearance.pdf'),
                           ],
                         ),
                       ),
                     ],
                   ),
 
-                  // Operational Details
-                  _buildSection(
-                    title: 'Operational Details',
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Coverage Areas / Wards',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF111318),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              height: 120,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: const Color(0xFFDBDFE6),
-                                  width: 1,
-                                ),
-                              ),
-                              child: ListView.builder(
-                                padding: const EdgeInsets.all(8),
-                                itemCount: _availableWards.length,
-                                itemBuilder: (context, index) {
-                                  final ward = _availableWards[index];
-                                  return CheckboxListTile(
-                                    dense: true,
-                                    title: Text(ward),
-                                    value: _selectedWards.contains(ward),
-                                    onChanged: (value) {
-                                      if (value == true) {
-                                        _addWard(ward);
-                                      } else {
-                                        _removeWard(ward);
-                                      }
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                            if (_selectedWards.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _selectedWards.map((ward) {
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF136AF6).withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          ward,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color(0xFF136AF6),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        GestureDetector(
-                                          onTap: () => _removeWard(ward),
-                                          child: const Icon(
-                                            Icons.close,
-                                            size: 16,
-                                            color: Color(0xFF136AF6),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Working Hours',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF111318),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTimeField(
-                                    label: 'Start',
-                                    value: _startTime,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _startTime = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildTimeField(
-                                    label: 'End',
-                                    value: _endTime,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _endTime = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Additional Notes',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF111318),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              height: 112,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: const Color(0xFFDBDFE6),
-                                  width: 1,
-                                ),
-                              ),
-                              child: TextField(
-                                controller: _additionalNotesController,
-                                maxLines: 4,
-                                decoration: const InputDecoration(
-                                  hintText: 'Add any relevant notes here...',
-                                  hintStyle: TextStyle(
-                                    color: Color(0xFF5F708C),
-                                    fontSize: 16,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.all(16),
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF111318),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Agent Status',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF111318),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE5E7EB),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildStatusButton('Active', _agentStatus == 'Active'),
-                                  ),
-                                  Expanded(
-                                    child: _buildStatusButton('Suspended', _agentStatus == 'Suspended'),
-                                  ),
-                                  Expanded(
-                                    child: _buildStatusButton('Pending', _agentStatus == 'Pending'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
           ),
 
-            // Bottom buttons
+            // Bottom button
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -639,76 +764,52 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
                   ),
                 ],
               ),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
-                      ),
+              child: Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF136AF6).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _handleCreate,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF136AF6).withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Handle save and invite
-                        _showSuccessDialog();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        'Save & Invite',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        // Handle save draft
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: Color(0xFF136AF6),
-                          width: 2,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          'Create',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        'Save Draft',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF136AF6),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -803,119 +904,9 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
     );
   }
 
-  Widget _buildTimeField({
-    required String label,
-    required String value,
-    required Function(String) onChanged,
-  }) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xFFDBDFE6),
-          width: 1,
-        ),
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF5F708C),
-            fontSize: 16,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
-        ),
-        controller: TextEditingController(text: value),
-        keyboardType: TextInputType.datetime,
-        onChanged: onChanged,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Color(0xFF111318),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildStatusButton(String status, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _agentStatus = status;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            status,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isSelected
-                  ? const Color(0xFF136AF6)
-                  : const Color(0xFF6B7280),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildUploadedFile(String filename) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              filename,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF111318),
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.close,
-              color: Color(0xFF6B7280),
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSuccessDialog() {
+  void _showMessageDialog(String message, bool isSuccess) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -932,95 +923,19 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.check_circle,
+            Icon(
+              isSuccess ? Icons.check_circle : Icons.error,
               size: 64,
-              color: Colors.green,
+              color: isSuccess ? Colors.green : Colors.red,
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Agent Created Successfully!',
+            Text(
+              message,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF111318),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Agent has been added to the system.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF5F708C),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _fullNameController.text.isEmpty ? 'Agent Name' : _fullNameController.text,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF111318),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _selectedDepartment ?? 'Department',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF5F708C),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: const Text(
-                          'Pending Approval',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.orange,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Onboarding Checklist',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF111318),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildChecklistItem('Invite Sent', true),
-                  _buildChecklistItem('Documents Verified', false),
-                  _buildChecklistItem('System Access Granted', false),
-                  _buildChecklistItem('Training Completed', false),
-                ],
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: isSuccess ? const Color(0xFF111318) : Colors.red,
               ),
             ),
             const SizedBox(height: 24),
@@ -1030,18 +945,20 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop(); // Close modal
-                  Navigator.of(context).pop(); // Go back to admin home
+                  if (isSuccess) {
+                    Navigator.of(context).pop(); // Go back to admin home
+                  }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF136AF6),
+                  backgroundColor: isSuccess ? const Color(0xFF136AF6) : Colors.red,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Done',
-                  style: TextStyle(
+                child: Text(
+                  isSuccess ? 'Done' : 'OK',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -1051,31 +968,6 @@ class _AddNewAgentPageState extends State<AddNewAgentPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildChecklistItem(String label, bool isCompleted) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(
-            isCompleted ? Icons.check_box : Icons.check_box_outline_blank,
-            size: 20,
-            color: isCompleted ? Colors.green : const Color(0xFF9CA3AF),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: isCompleted
-                  ? const Color(0xFF111318)
-                  : const Color(0xFF5F708C),
-            ),
-          ),
-        ],
       ),
     );
   }

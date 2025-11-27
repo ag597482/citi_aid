@@ -133,6 +133,30 @@ class ComplaintService {
     );
   }
 
+  /// Get complaints summary
+  /// Returns a map with openComplaints, assignedComplaints, inProgressComplaints, and fixedComplaints
+  Future<ApiResponse<Map<String, int>>> getComplaintsSummary() async {
+    return await _api.get<Map<String, int>>(
+      ApiEndpoints.complaintsSummary,
+      fromJson: (json) {
+        if (json is Map<String, dynamic>) {
+          return {
+            'openComplaints': json['openComplaints'] as int? ?? 0,
+            'assignedComplaints': json['assignedComplaints'] as int? ?? 0,
+            'inProgressComplaints': json['inProgressComplaints'] as int? ?? 0,
+            'fixedComplaints': json['fixedComplaints'] as int? ?? 0,
+          };
+        }
+        return {
+          'openComplaints': 0,
+          'assignedComplaints': 0,
+          'inProgressComplaints': 0,
+          'fixedComplaints': 0,
+        };
+      },
+    );
+  }
+
   /// Like/Unlike complaint
   Future<ApiResponse<Map<String, dynamic>>> toggleLike(String complaintId) async {
     return await _api.post<Map<String, dynamic>>(

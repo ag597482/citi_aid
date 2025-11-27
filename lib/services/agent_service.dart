@@ -23,6 +23,19 @@ class AgentService {
     );
   }
 
+  /// Get agents by department
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await agentService.getAgentsByDepartment('POTHOLES');
+  /// ```
+  Future<ApiResponse<List<dynamic>>> getAgentsByDepartment(String department) async {
+    return await _api.get<List<dynamic>>(
+      ApiEndpoints.userAgentsByDepartment(department),
+      fromJson: (json) => json is List ? json : [],
+    );
+  }
+
   /// Get agent by ID
   Future<ApiResponse<Map<String, dynamic>>> getAgentById(String id) async {
     return await _api.get<Map<String, dynamic>>(ApiEndpoints.agentById(id));

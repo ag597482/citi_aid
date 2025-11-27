@@ -529,6 +529,12 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
     final documentPath = agent['document'] as String?;
     final hasDocument = documentPath != null && documentPath.isNotEmpty;
     final documentUrl = hasDocument ? _getFullDocumentUrl(documentPath) : '';
+    final profilePhotoUrl = agent['profilePhotoUrl'] as String?;
+    final hasProfilePhoto = profilePhotoUrl != null && profilePhotoUrl.isNotEmpty;
+    final profilePhotoFullUrl = hasProfilePhoto ? _getFullDocumentUrl(profilePhotoUrl) : '';
+    final assignedComplaint = agent['assignedComplaint'] as int? ?? 0;
+    final complaintsInProgress = agent['complaintsInProgress'] as int? ?? 0;
+    final closedComplaints = agent['closedComplaints'] as int? ?? 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -554,26 +560,89 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
             // Agent Information Section
             Row(
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                // Profile Photo or Avatar
+                if (hasProfilePhoto)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Image.network(
+                      profilePhotoFullUrl,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              name.isNotEmpty ? name[0].toUpperCase() : 'A',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : 'A',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  )
+                else
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : 'A',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -829,8 +898,120 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                   ],
                 ),
               ),
+            const SizedBox(height: 16),
+            
+            // Complaint Statistics Section
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F7F8),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.assignment,
+                        size: 18,
+                        color: Colors.grey.shade700,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Complaint Statistics',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF111318),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatItem(
+                          'Assigned',
+                          assignedComplaint.toString(),
+                          Colors.orange,
+                          Icons.assignment_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildStatItem(
+                          'In Progress',
+                          complaintsInProgress.toString(),
+                          Colors.blue,
+                          Icons.work_outline,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildStatItem(
+                          'Closed',
+                          closedComplaints.toString(),
+                          Colors.green,
+                          Icons.check_circle_outline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: color,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

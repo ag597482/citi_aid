@@ -38,6 +38,19 @@ class ComplaintService {
     return await _api.get<Map<String, dynamic>>(ApiEndpoints.complaintById(id));
   }
 
+  /// Get complaints by status
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await complaintService.getComplaintsByStatus('RAISED');
+  /// ```
+  Future<ApiResponse<List<dynamic>>> getComplaintsByStatus(String status) async {
+    return await _api.get<List<dynamic>>(
+      ApiEndpoints.complaintsByStatus(status),
+      fromJson: (json) => json is List ? json : [],
+    );
+  }
+
   /// Create new complaint
   /// 
   /// Example:
@@ -168,6 +181,37 @@ class ComplaintService {
   Future<ApiResponse<Map<String, dynamic>>> markAsFixed(String complaintId) async {
     return await _api.put<Map<String, dynamic>>(
       ApiEndpoints.complaintFixed(complaintId),
+    );
+  }
+
+  /// Assign agent to complaint
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await complaintService.assignAgentToComplaint(
+  ///   complaintId: 'complaint_id',
+  ///   agentId: 'agent_id',
+  /// );
+  /// ```
+  Future<ApiResponse<Map<String, dynamic>>> assignAgentToComplaint({
+    required String complaintId,
+    required String agentId,
+  }) async {
+    return await _api.put<Map<String, dynamic>>(
+      ApiEndpoints.complaintAssign(complaintId, agentId),
+    );
+  }
+
+  /// Discard complaint
+  /// Updates the complaint status and sets completedAt to current time
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await complaintService.discardComplaint('complaint_id');
+  /// ```
+  Future<ApiResponse<Map<String, dynamic>>> discardComplaint(String complaintId) async {
+    return await _api.put<Map<String, dynamic>>(
+      ApiEndpoints.complaintDiscard(complaintId),
     );
   }
 

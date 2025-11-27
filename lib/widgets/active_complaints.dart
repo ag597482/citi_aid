@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'complaint_detail.dart';
-import 'assign_agent.dart';
+import '../services/complaint_service.dart';
 
 class ActiveComplaintsPage extends StatefulWidget {
   const ActiveComplaintsPage({super.key});
@@ -10,67 +10,159 @@ class ActiveComplaintsPage extends StatefulWidget {
 }
 
 class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
-  final Set<int> _selectedComplaints = {};
+  final ComplaintService _complaintService = ComplaintService();
+  List<Map<String, dynamic>> _complaints = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  final List<Map<String, dynamic>> _complaints = [
-    {
-      'id': 12345,
-      'title': 'Broken Streetlight',
-      'category': 'Streetlight',
-      'severity': 'Medium',
-      'severityColor': Colors.orange,
-      'location': '123 Main St',
-      'status': 'New',
-      'statusColor': Colors.green,
-      'date': 'Oct 27, 2023',
-      'selected': false,
-    },
-    {
-      'id': 12346,
-      'title': 'Pothole on Elm Street',
-      'category': 'Pothole',
-      'severity': 'High',
-      'severityColor': Colors.red,
-      'location': '456 Elm St',
-      'status': 'In Progress',
-      'statusColor': Colors.orange,
-      'date': 'Oct 26, 2023',
-      'selected': false,
-    },
-    {
-      'id': 12347,
-      'title': 'Overflowing Dustbin',
-      'category': 'Waste Mgmt',
-      'severity': 'Medium',
-      'severityColor': Colors.orange,
-      'location': '789 Oak Ave',
-      'status': 'New',
-      'statusColor': Colors.green,
-      'date': 'Oct 25, 2023',
-      'selected': true,
-    },
-    {
-      'id': 12348,
-      'title': 'Illegal Parking',
-      'category': 'Parking',
-      'severity': 'Low',
-      'severityColor': Colors.yellow,
-      'status': 'Resolved',
-      'statusColor': Colors.grey,
-      'location': '101 Pine Rd',
-      'date': 'Oct 24, 2023',
-      'selected': false,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadComplaints();
+  }
 
-  void _toggleSelection(int id) {
+  /// Load complaints from API (only RAISED status)
+  Future<void> _loadComplaints() async {
     setState(() {
-      if (_selectedComplaints.contains(id)) {
-        _selectedComplaints.remove(id);
-      } else {
-        _selectedComplaints.add(id);
-      }
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final response = await _complaintService.getComplaintsByStatus('RAISED');
+
+      if (response.success && response.data != null) {
+        final complaintsList = response.data as List;
+        setState(() {
+          _complaints = complaintsList
+              .map((json) => _mapComplaintFromApi(json as Map<String, dynamic>))
+              .toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = response.error ?? 'Failed to load complaints';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An error occurred: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Map API complaint data to display format
+  Map<String, dynamic> _mapComplaintFromApi(Map<String, dynamic> json) {
+    final department = json['department'] as String? ?? '';
+    final severity = json['severity'] as String? ?? '';
+    final status = json['status'] as String? ?? '';
+    final createdAt = json['createdAt'] as String?;
+
+    String formattedDate = 'N/A';
+    if (createdAt != null) {
+      try {
+        final dateTime = DateTime.parse(createdAt);
+        // Format date manually to avoid intl dependency issues
+        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        formattedDate = '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
+      } catch (e) {
+        formattedDate = createdAt;
+      }
+    }
+
+    return {
+      'id': json['id'] as String, // Keep as String (MongoDB ObjectId)
+      'title': json['title'] as String? ?? 'Untitled',
+      'category': _getCategoryDisplayName(department),
+      'severity': _getSeverityDisplayName(severity),
+      'severityColor': _getSeverityColor(severity),
+      'location': json['location'] as String? ?? 'Unknown location',
+      'status': _getStatusDisplayName(status),
+      'statusColor': _getStatusColor(status),
+      'date': formattedDate,
+    };
+  }
+
+  /// Get category display name from department
+  String _getCategoryDisplayName(String department) {
+    switch (department.toUpperCase()) {
+      case 'ELECTRICITY':
+        return 'Electricity';
+      case 'POTHOLES':
+        return 'Potholes';
+      case 'DRAINAGE':
+        return 'Drainage';
+      case 'GARBAGE':
+        return 'Garbage';
+      default:
+        return department;
+    }
+  }
+
+  /// Get severity display name
+  String _getSeverityDisplayName(String severity) {
+    switch (severity.toUpperCase()) {
+      case 'HIGH':
+        return 'High';
+      case 'MEDIUM':
+        return 'Medium';
+      case 'LOW':
+        return 'Low';
+      default:
+        return severity;
+    }
+  }
+
+  /// Get severity color
+  Color _getSeverityColor(String severity) {
+    switch (severity.toUpperCase()) {
+      case 'HIGH':
+        return Colors.red;
+      case 'MEDIUM':
+        return Colors.orange;
+      case 'LOW':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// Get status display name
+  String _getStatusDisplayName(String status) {
+    switch (status.toUpperCase()) {
+      case 'RAISED':
+        return 'New';
+      case 'ASSIGNED':
+        return 'Assigned';
+      case 'IN_PROGRESS':
+      case 'IN-PROGRESS':
+        return 'In Progress';
+      case 'COMPLETED':
+      case 'FIXED':
+        return 'Resolved';
+      default:
+        return status;
+    }
+  }
+
+  /// Get status color
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'RAISED':
+        return Colors.green;
+      case 'ASSIGNED':
+        return Colors.blue;
+      case 'IN_PROGRESS':
+      case 'IN-PROGRESS':
+        return Colors.orange;
+      case 'COMPLETED':
+      case 'FIXED':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
@@ -150,23 +242,87 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
 
             // Complaints List
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: _complaints.length,
-                itemBuilder: (context, index) {
-                  final complaint = _complaints[index];
-                  final isSelected = _selectedComplaints.contains(complaint['id'] as int);
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF136AF6)),
+                      ),
+                    )
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadComplaints,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF136AF6),
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _complaints.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.inbox_outlined,
+                                    size: 64,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No complaints found',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _loadComplaints,
+                              color: const Color(0xFF136AF6),
+                              child: ListView.builder(
+                                padding: const EdgeInsets.all(20),
+                                itemCount: _complaints.length,
+                                itemBuilder: (context, index) {
+                                  final complaint = _complaints[index];
 
                   return GestureDetector(
                     onTap: () {
+                      final complaintId = complaint['id'];
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => ComplaintDetailPage(
-                            complaintId: complaint['id'] as int,
+                            complaintId: complaintId,
                             isAdminView: true,
                           ),
                         ),
-                      );
+                      ).then((result) {
+                        // Refresh complaints list when returning from detail page
+                        _loadComplaints();
+                      });
                     },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -186,241 +342,64 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
                           ),
                         ],
                       ),
-                      child: Row(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Checkbox(
-                            value: isSelected,
-                            onChanged: (value) {
-                              _toggleSelection(complaint['id'] as int);
-                            },
-                            activeColor: const Color(0xFF136AF6),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  complaint['title'] as String,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF111318),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 4,
-                                  children: [
-                                    _buildBadge(
-                                      complaint['category'] as String,
-                                      _getCategoryColor(complaint['category'] as String),
-                                    ),
-                                    _buildSeverityBadge(
-                                      complaint['severity'] as String,
-                                      complaint['severityColor'] as Color,
-                                    ),
-                                    _buildLocationBadge(complaint['location'] as String),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    _buildStatusBadge(
-                                      complaint['status'] as String,
-                                      complaint['statusColor'] as Color,
-                                    ),
-                                    Text(
-                                      'ID: ${complaint['id']}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF5F708C),
-                                      ),
-                                    ),
-                                    Text(
-                                      complaint['date'] as String,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF5F708C),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) => AssignAgentPage(
-                                              complaintId: complaint['id'] as int,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: const Text(
-                                        'Assign',
-                                        style: TextStyle(
-                                          color: Color(0xFF136AF6),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        // View complaint detail
-                                      },
-                                      child: const Text(
-                                        'View',
-                                        style: TextStyle(
-                                          color: Color(0xFF5F708C),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        // Discard complaint
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: const Text('Discard Complaint'),
-                                            content: Text('Are you sure you want to discard complaint #${complaint['id']}?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(context),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.pop(context);
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    const SnackBar(content: Text('Complaint discarded')),
-                                                  );
-                                                },
-                                                child: const Text(
-                                                  'Discard',
-                                                  style: TextStyle(color: Colors.red),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                      child: const Text(
-                                        'Discard',
-                                        style: TextStyle(
-                                          color: Colors.red,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                          Text(
+                            complaint['title'] as String,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF111318),
                             ),
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              _buildBadge(
+                                complaint['category'] as String,
+                                _getCategoryColor(complaint['category'] as String),
+                              ),
+                              _buildSeverityBadge(
+                                complaint['severity'] as String,
+                                complaint['severityColor'] as Color,
+                              ),
+                              _buildLocationBadge(complaint['location'] as String),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              _buildStatusBadge(
+                                complaint['status'] as String,
+                                complaint['statusColor'] as Color,
+                              ),
+                              Text(
+                                'ID: ${complaint['id']}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF5F708C),
+                                ),
+                              ),
+                              Text(
+                                complaint['date'] as String,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF5F708C),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                   );
-                },
-              ),
-            ),
-
-            // Bottom bar
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: _selectedComplaints.isEmpty
-                          ? null
-                          : const LinearGradient(
-                              colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
-                            ),
-                      color: _selectedComplaints.isEmpty
-                          ? const Color(0xFFE2E8F0)
-                          : null,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: _selectedComplaints.isEmpty
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: const Color(0xFF136AF6).withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 6),
+                                },
                               ),
-                            ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _selectedComplaints.isEmpty ? null : () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        'Bulk Assign (${_selectedComplaints.length} selected)',
-                        style: TextStyle(
-                          color: _selectedComplaints.isEmpty
-                              ? const Color(0xFF64748B)
-                              : Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text(
-                          'Previous',
-                          style: TextStyle(color: Color(0xFF136AF6)),
-                        ),
-                      ),
-                      const Text(
-                        'Page 1 of 10',
-                        style: TextStyle(color: Color(0xFF5F708C)),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text(
-                          'Next',
-                          style: TextStyle(color: Color(0xFF136AF6)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                            ),
             ),
           ],
         ),
@@ -429,15 +408,15 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
   }
 
   Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Streetlight':
+    switch (category.toLowerCase()) {
+      case 'electricity':
         return Colors.blue;
-      case 'Pothole':
+      case 'potholes':
         return Colors.yellow;
-      case 'Waste Mgmt':
+      case 'drainage':
+        return Colors.cyan;
+      case 'garbage':
         return Colors.purple;
-      case 'Parking':
-        return Colors.red;
       default:
         return Colors.grey;
     }

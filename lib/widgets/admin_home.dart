@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'active_complaints.dart';
 import 'add_new_agent.dart';
 import 'agents_summary.dart';
+import 'monitor_complaint.dart';
 import '../services/complaint_service.dart';
 import '../services/auth_service.dart';
 
@@ -327,7 +328,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                                     onTap: () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
-                                          builder: (context) => const ActiveComplaintsPage(),
+                                          builder: (context) => const MonitorComplaintPage(),
                                         ),
                                       );
                                     },

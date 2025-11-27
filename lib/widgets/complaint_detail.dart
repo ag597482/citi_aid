@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../api/api_config.dart';
 import 'edit_complaint.dart';
 import 'feed_page.dart';
+import 'assign_agent.dart';
 
 class ComplaintDetailPage extends StatefulWidget {
   final dynamic complaintId;
@@ -110,6 +111,12 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
 
   bool _hasAgent() {
     return _complaint != null && _complaint!['agent'] != null;
+  }
+
+  bool _isDiscarded() {
+    if (_complaint == null) return false;
+    final status = _complaint!['status'] as String? ?? '';
+    return status.toUpperCase() == 'DISCARDED';
   }
 
   @override
@@ -336,8 +343,17 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
 
                                       const SizedBox(height: 16),
 
-                                      // Assigned Agent
-                                      if (_hasAgent()) _buildAgentSection(),
+                                      // Assigned Agent or Select Agent button
+                                      if (_hasAgent()) 
+                                        _buildAgentSection()
+                                      else if (widget.isAdminView && !_isDiscarded())
+                                        _buildSelectAgentSection(),
+
+                                      // Admin actions (Discard button)
+                                      if (widget.isAdminView) ...[
+                                        const SizedBox(height: 16),
+                                        _buildAdminActionsSection(),
+                                      ],
                                     ],
                                   ),
 
@@ -520,6 +536,238 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
         ),
       ],
     );
+  }
+
+  Widget _buildSelectAgentSection() {
+    if (_complaint == null) return const SizedBox.shrink();
+    
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F7F8),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            Icons.person_add,
+            color: Color(0xFF8E8E93),
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Assign Agent',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1C1C1E),
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'No agent assigned yet',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF8E8E93),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 40,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final complaintId = _complaint!['id'];
+                    String complaintIdString;
+                    
+                    if (complaintId is String) {
+                      complaintIdString = complaintId;
+                    } else {
+                      complaintIdString = complaintId.toString();
+                    }
+                    
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => AssignAgentPage(
+                          complaintId: complaintIdString,
+                        ),
+                      ),
+                    ).then((result) {
+                      // Reload complaint if agent was assigned
+                      if (result == true) {
+                        _loadComplaint();
+                      }
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF136AF6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Select Agent',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdminActionsSection() {
+    if (_complaint == null) return const SizedBox.shrink();
+    
+    // Don't show discard button if complaint is already discarded
+    if (_isDiscarded()) {
+      return const SizedBox.shrink();
+    }
+    
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 40,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _discardComplaint();
+              },
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text(
+                'Discard',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.withOpacity(0.1),
+                foregroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _discardComplaint() async {
+    if (_complaint == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Discard Complaint',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to discard this complaint? This action will mark it as discarded.',
+          style: TextStyle(
+            fontSize: 16,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Discard',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final complaintId = _complaint!['id'];
+    String complaintIdString;
+    
+    if (complaintId is String) {
+      complaintIdString = complaintId;
+    } else {
+      complaintIdString = complaintId.toString();
+    }
+
+    try {
+      final response = await _complaintService.discardComplaint(complaintIdString);
+
+      if (response.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Complaint discarded successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Navigate back to complaints list
+          Navigator.of(context).pop(true);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.error ?? 'Failed to discard complaint'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildStatusTimeline() {

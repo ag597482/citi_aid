@@ -20,12 +20,16 @@ class ApiEndpoints {
   static String complaintImage(String id) => '/complaints/$id/image';
   static String complaintLike(String id) => '/complaints/$id/like';
   static String complaintFixed(String id) => '/complaints/$id/fixed';
+  static String complaintAssign(String complaintId, String agentId) => '/complaints/$complaintId/assign/$agentId';
+  static String complaintDiscard(String id) => '/complaints/$id/discard';
+  static String complaintsByStatus(String status) => '/complaints/status/$status';
   static const String myComplaints = '/complaints/my';
   static const String complaintsSummary = '/complaints/summary';
   
   // ==================== Agent Endpoints ====================
   static const String agents = '/agents';
   static const String userAgents = '/user/agents';
+  static String userAgentsByDepartment(String department) => '/user/agents/department/$department';
   static const String createAgent = '/user/agent/create';
   static String agentById(String id) => '/agents/$id';
   static String agentAssign(String id) => '/agents/$id/assign';

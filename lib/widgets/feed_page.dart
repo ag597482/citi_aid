@@ -43,29 +43,53 @@ class Complaint {
     // Extract customer name from customer object
     String? createdBy;
     if (json['customer'] != null) {
-      final customer = json['customer'] as Map<String, dynamic>;
-      createdBy = customer['name'] as String?;
+      if (json['customer'] is Map<String, dynamic>) {
+        final customer = json['customer'] as Map<String, dynamic>;
+        createdBy = customer['name'] as String?;
+      } else if (json['customer'] is String) {
+        createdBy = json['customer'] as String;
+      }
+    }
+    
+    // Extract agent - can be either a Map or String
+    String? agent;
+    if (json['agent'] != null) {
+      if (json['agent'] is Map<String, dynamic>) {
+        final agentMap = json['agent'] as Map<String, dynamic>;
+        agent = agentMap['name'] as String? ?? agentMap['id'] as String?;
+      } else if (json['agent'] is String) {
+        agent = json['agent'] as String;
+      }
+    }
+    
+    // Safely parse dates
+    DateTime? parseDate(dynamic dateValue) {
+      if (dateValue == null) return null;
+      if (dateValue is String) {
+        try {
+          return DateTime.parse(dateValue);
+        } catch (e) {
+          return null;
+        }
+      }
+      return null;
     }
     
     return Complaint(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      location: json['location'] as String,
-      department: json['department'] as String,
-      severity: json['severity'] as String,
-      status: json['status'] as String,
-      beforePhoto: json['beforePhoto'] as String?,
-      afterPhoto: json['afterPhoto'] as String?,
-      agent: json['agent'] as String?,
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
+      department: json['department']?.toString() ?? '',
+      severity: json['severity']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      beforePhoto: json['beforePhoto']?.toString(),
+      afterPhoto: json['afterPhoto']?.toString(),
+      agent: agent,
       createdBy: createdBy,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      assignedAt: json['assignedAt'] != null 
-          ? DateTime.parse(json['assignedAt'] as String)
-          : null,
-      completedAt: json['completedAt'] != null
-          ? DateTime.parse(json['completedAt'] as String)
-          : null,
+      createdAt: parseDate(json['createdAt']) ?? DateTime.now(),
+      assignedAt: parseDate(json['assignedAt']),
+      completedAt: parseDate(json['completedAt']),
     );
   }
 

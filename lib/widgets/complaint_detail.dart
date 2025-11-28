@@ -221,6 +221,41 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
+                                  // Status Badge - Prominently displayed
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(_complaint!['status']).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: _getStatusColor(_complaint!['status']).withOpacity(0.3),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: _getStatusColor(_complaint!['status']),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _getStatusDisplayName(_complaint!['status']),
+                                          style: TextStyle(
+                                            color: _getStatusColor(_complaint!['status']),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
                                   Row(
                                     children: [
                                       Container(
@@ -268,47 +303,205 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
 
                                   const SizedBox(height: 24),
 
-                                  // Media Carousel
-                                  if (_complaint!['beforePhoto'] != null)
-                                    SizedBox(
-                                      height: 200,
-                                      child: ListView(
-                                        scrollDirection: Axis.horizontal,
-                                        children: [
-                                          Container(
-                                            width: 280,
-                                            margin: const EdgeInsets.only(right: 12),
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(8),
-                                              image: DecorationImage(
-                                                image: NetworkImage(
-                                                  _getImageUrl(_complaint!['beforePhoto']),
-                                                ),
-                                                fit: BoxFit.cover,
-                                                onError: (exception, stackTrace) {
-                                                  // Handle image load error
-                                                },
-                                              ),
-                                            ),
+                                  // Media Carousel - Show if beforePhoto or afterPhoto exists
+                                  if (_complaint!['beforePhoto'] != null || _complaint!['afterPhoto'] != null)
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Photos',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF1C1C1E),
                                           ),
-                                          if (_complaint!['afterPhoto'] != null)
-                                            Container(
-                                              width: 280,
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(8),
-                                                image: DecorationImage(
-                                                  image: NetworkImage(
-                                                    _getImageUrl(_complaint!['afterPhoto']),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        SizedBox(
+                                          height: 220,
+                                          child: ListView(
+                                            scrollDirection: Axis.horizontal,
+                                            children: [
+                                              // Before Photo
+                                              if (_complaint!['beforePhoto'] != null)
+                                                Container(
+                                                  width: 280,
+                                                  margin: const EdgeInsets.only(right: 12),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(
+                                                      color: const Color(0xFFE2E8F0),
+                                                      width: 1,
+                                                    ),
                                                   ),
-                                                  fit: BoxFit.cover,
-                                                  onError: (exception, stackTrace) {
-                                                    // Handle image load error
-                                                  },
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: ClipRRect(
+                                                          borderRadius: const BorderRadius.vertical(
+                                                            top: Radius.circular(12),
+                                                          ),
+                                                          child: Image.network(
+                                                            _getImageUrl(_complaint!['beforePhoto']),
+                                                            width: double.infinity,
+                                                            fit: BoxFit.cover,
+                                                            errorBuilder: (context, error, stackTrace) {
+                                                              return Container(
+                                                                color: Colors.grey[200],
+                                                                child: const Center(
+                                                                  child: Icon(
+                                                                    Icons.broken_image,
+                                                                    color: Colors.grey,
+                                                                    size: 48,
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                            loadingBuilder: (context, child, loadingProgress) {
+                                                              if (loadingProgress == null) return child;
+                                                              return Container(
+                                                                color: Colors.grey[200],
+                                                                child: Center(
+                                                                  child: CircularProgressIndicator(
+                                                                    value: loadingProgress.expectedTotalBytes != null
+                                                                        ? loadingProgress.cumulativeBytesLoaded /
+                                                                            loadingProgress.expectedTotalBytes!
+                                                                        : null,
+                                                                    strokeWidth: 2,
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 8,
+                                                        ),
+                                                        decoration: const BoxDecoration(
+                                                          color: Color(0xFFF5F7F8),
+                                                          borderRadius: BorderRadius.vertical(
+                                                            bottom: Radius.circular(12),
+                                                          ),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons.camera_alt,
+                                                              size: 16,
+                                                              color: Colors.grey[600],
+                                                            ),
+                                                            const SizedBox(width: 6),
+                                                            const Text(
+                                                              'Before',
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                fontWeight: FontWeight.w500,
+                                                                color: Color(0xFF64748B),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
+                                              // After Photo
+                                              if (_complaint!['afterPhoto'] != null)
+                                                Container(
+                                                  width: 280,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(
+                                                      color: const Color(0xFF34C759).withOpacity(0.3),
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: ClipRRect(
+                                                          borderRadius: const BorderRadius.vertical(
+                                                            top: Radius.circular(12),
+                                                          ),
+                                                          child: Image.network(
+                                                            _getImageUrl(_complaint!['afterPhoto']),
+                                                            width: double.infinity,
+                                                            fit: BoxFit.cover,
+                                                            errorBuilder: (context, error, stackTrace) {
+                                                              return Container(
+                                                                color: Colors.grey[200],
+                                                                child: const Center(
+                                                                  child: Icon(
+                                                                    Icons.broken_image,
+                                                                    color: Colors.grey,
+                                                                    size: 48,
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                            loadingBuilder: (context, child, loadingProgress) {
+                                                              if (loadingProgress == null) return child;
+                                                              return Container(
+                                                                color: Colors.grey[200],
+                                                                child: Center(
+                                                                  child: CircularProgressIndicator(
+                                                                    value: loadingProgress.expectedTotalBytes != null
+                                                                        ? loadingProgress.cumulativeBytesLoaded /
+                                                                            loadingProgress.expectedTotalBytes!
+                                                                        : null,
+                                                                    strokeWidth: 2,
+                                                                    valueColor: const AlwaysStoppedAnimation<Color>(
+                                                                      Color(0xFF34C759),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 8,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(0xFF34C759).withOpacity(0.1),
+                                                          borderRadius: const BorderRadius.vertical(
+                                                            bottom: Radius.circular(12),
+                                                          ),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            const Icon(
+                                                              Icons.check_circle,
+                                                              size: 16,
+                                                              color: Color(0xFF34C759),
+                                                            ),
+                                                            const SizedBox(width: 6),
+                                                            const Text(
+                                                              'After (Fixed)',
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                fontWeight: FontWeight.w600,
+                                                                color: Color(0xFF34C759),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
 
                                   const SizedBox(height: 24),
@@ -316,6 +509,16 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                                   // Information Section
                                   Column(
                                     children: [
+                                      // Status Information
+                                      _buildInfoSection(
+                                        icon: Icons.info_outline,
+                                        title: 'Status',
+                                        content: _getStatusDisplayName(_complaint!['status']),
+                                        statusColor: _getStatusColor(_complaint!['status']),
+                                      ),
+
+                                      const SizedBox(height: 16),
+
                                       // Description
                                       _buildInfoSection(
                                         icon: Icons.description,
@@ -390,6 +593,46 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
     }
   }
 
+  Color _getStatusColor(String? status) {
+    switch (status?.toUpperCase()) {
+      case 'IN_PROGRESS':
+      case 'IN-PROGRESS':
+        return const Color(0xFFFF9500); // warning orange
+      case 'RAISED':
+        return const Color(0xFF64748B); // gray
+      case 'ASSIGNED':
+      case 'AGENT_ASSIGNED':
+        return const Color(0xFF136AF6); // primary blue
+      case 'COMPLETED':
+      case 'FIXED':
+        return const Color(0xFF34C759); // success green
+      case 'DISCARDED':
+        return const Color(0xFFFF3B30); // danger red
+      default:
+        return const Color(0xFF64748B);
+    }
+  }
+
+  String _getStatusDisplayName(String? status) {
+    switch (status?.toUpperCase()) {
+      case 'RAISED':
+        return 'Raised';
+      case 'IN_PROGRESS':
+      case 'IN-PROGRESS':
+        return 'In Progress';
+      case 'ASSIGNED':
+      case 'AGENT_ASSIGNED':
+        return 'Agent Assigned';
+      case 'COMPLETED':
+      case 'FIXED':
+        return 'Fixed';
+      case 'DISCARDED':
+        return 'Discarded';
+      default:
+        return status ?? 'Unknown';
+    }
+  }
+
   String _getReporterInfo() {
     if (_complaint == null) return 'Unknown';
     final customer = _complaint!['customer'] as Map<String, dynamic>?;
@@ -407,7 +650,9 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
     required IconData icon,
     required String title,
     required String content,
+    Color? statusColor,
   }) {
+    final isStatusSection = statusColor != null;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -415,12 +660,14 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F7F8),
+            color: isStatusSection 
+                ? statusColor.withOpacity(0.1)
+                : const Color(0xFFF5F7F8),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            color: const Color(0xFF8E8E93),
+            color: isStatusSection ? statusColor : const Color(0xFF8E8E93),
             size: 24,
           ),
         ),
@@ -438,13 +685,47 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                content,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF8E8E93),
-                ),
-              ),
+              isStatusSection
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: statusColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: statusColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            content,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: statusColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Text(
+                      content,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF8E8E93),
+                      ),
+                    ),
             ],
           ),
         ),

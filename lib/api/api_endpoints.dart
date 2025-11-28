@@ -22,9 +22,12 @@ class ApiEndpoints {
   static String complaintFixed(String id) => '/complaints/$id/fixed';
   static String complaintAssign(String complaintId, String agentId) => '/complaints/$complaintId/assign/$agentId';
   static String complaintDiscard(String id) => '/complaints/$id/discard';
+  static String complaintStartProgress(String id) => '/complaints/$id/start-progress';
+  static String complaintClose(String id) => '/complaints/$id/close';
   static String complaintsByStatus(String status) => '/complaints/status/$status';
   static const String myComplaints = '/complaints/my';
   static const String complaintsSummary = '/complaints/summary';
+  static String complaintsByAgent(String agentId) => '/complaints/agent/$agentId';
   
   // ==================== Agent Endpoints ====================
   static const String agents = '/agents';
@@ -34,6 +37,8 @@ class ApiEndpoints {
   static String agentById(String id) => '/agents/$id';
   static String agentAssign(String id) => '/agents/$id/assign';
   static String agentComplaints(String id) => '/agents/$id/complaints';
+  static String agentProfile(String agentId) => '/user/agent/profile/$agentId';
+  static String agentUpdate(String agentId) => '/user/agent/update/$agentId';
   
   // ==================== Customer Endpoints ====================
   static const String customerProfile = '/customers/profile';

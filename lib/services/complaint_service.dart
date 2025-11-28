@@ -51,6 +51,19 @@ class ComplaintService {
     );
   }
 
+  /// Get complaints for a specific agent
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await complaintService.getAgentComplaints('agent_id');
+  /// ```
+  Future<ApiResponse<List<dynamic>>> getAgentComplaints(String agentId) async {
+    return await _api.get<List<dynamic>>(
+      ApiEndpoints.complaintsByAgent(agentId),
+      fromJson: (json) => json is List ? json : [],
+    );
+  }
+
   /// Create new complaint
   /// 
   /// Example:
@@ -212,6 +225,39 @@ class ComplaintService {
   Future<ApiResponse<Map<String, dynamic>>> discardComplaint(String complaintId) async {
     return await _api.put<Map<String, dynamic>>(
       ApiEndpoints.complaintDiscard(complaintId),
+    );
+  }
+
+  /// Start progress on complaint (change status from AGENT_ASSIGNED to IN_PROGRESS)
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await complaintService.startProgress('complaint_id');
+  /// ```
+  Future<ApiResponse<Map<String, dynamic>>> startProgress(String complaintId) async {
+    return await _api.put<Map<String, dynamic>>(
+      ApiEndpoints.complaintStartProgress(complaintId),
+    );
+  }
+
+  /// Close complaint with after photo
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await complaintService.closeComplaint(
+  ///   complaintId: 'complaint_id',
+  ///   afterPhotoUrl: 'url_to_photo',
+  /// );
+  /// ```
+  Future<ApiResponse<Map<String, dynamic>>> closeComplaint({
+    required String complaintId,
+    required String afterPhotoUrl,
+  }) async {
+    return await _api.put<Map<String, dynamic>>(
+      ApiEndpoints.complaintClose(complaintId),
+      body: {
+        'afterPhotoUrl': afterPhotoUrl,
+      },
     );
   }
 

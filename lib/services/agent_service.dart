@@ -115,5 +115,28 @@ class AgentService {
       fromJson: (json) => json is List ? json : [],
     );
   }
+
+  /// Get agent profile (includes active and closed complaints)
+  Future<ApiResponse<Map<String, dynamic>>> getAgentProfile(String agentId) async {
+    return await _api.get<Map<String, dynamic>>(
+      ApiEndpoints.agentProfile(agentId),
+    );
+  }
+
+  /// Update agent profile (password and profilePhotoUrl)
+  Future<ApiResponse<Map<String, dynamic>>> updateAgentProfile({
+    required String agentId,
+    String? password,
+    String? profilePhotoUrl,
+  }) async {
+    final body = <String, dynamic>{};
+    if (password != null) body['password'] = password;
+    if (profilePhotoUrl != null) body['profilePhotoUrl'] = profilePhotoUrl;
+
+    return await _api.put<Map<String, dynamic>>(
+      ApiEndpoints.agentUpdate(agentId),
+      body: body,
+    );
+  }
 }
 

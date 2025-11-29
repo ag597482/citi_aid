@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/complaint_service.dart';
 import '../services/auth_service.dart';
 import '../api/api_config.dart';
@@ -117,6 +118,13 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
     if (_complaint == null) return false;
     final status = _complaint!['status'] as String? ?? '';
     return status.toUpperCase() == 'DISCARDED';
+  }
+
+  bool _isRaised() {
+    if (_complaint == null) return false;
+    final status = _complaint!['status'] as String?;
+    if (status == null || status.isEmpty) return false;
+    return status.trim().toUpperCase() == 'RAISED';
   }
 
   @override
@@ -567,8 +575,8 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
 
                                   const SizedBox(height: 24),
 
-                                  // CTA Bar
-                                  if (_isComplaintCreator())
+                                  // CTA Bar - Only show if user is creator AND status is RAISED
+                                  if (_isComplaintCreator() && _isRaised())
                                     _buildCTABar(),
                                 ],
                               ),
@@ -739,9 +747,11 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
     
     final agent = _complaint!['agent'];
     String agentName = 'Unknown Agent';
+    String? agentPhone;
     
     if (agent is Map<String, dynamic>) {
       agentName = agent['name'] as String? ?? 'Unknown Agent';
+      agentPhone = agent['phone'] as String?;
     } else if (agent is String) {
       agentName = agent;
     }
@@ -783,18 +793,40 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                   color: Color(0xFF8E8E93),
                 ),
               ),
+              if (agentPhone != null && agentPhone.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.phone,
+                      size: 14,
+                      color: Color(0xFF8E8E93),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      agentPhone,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF8E8E93),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 12),
               SizedBox(
                 height: 40,
                 child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Contacting agent...'),
-                        backgroundColor: Color(0xFF007AFF),
-                      ),
-                    );
-                  },
+                  onPressed: agentPhone != null && agentPhone.isNotEmpty
+                      ? () => _launchPhoneDialer(agentPhone!)
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Phone number not available for this agent'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF5F7F8),
                     shape: RoundedRectangleBorder(
@@ -802,13 +834,24 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Contact Agent',
-                    style: TextStyle(
-                      color: Color(0xFF1C1C1E),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.phone,
+                        size: 18,
+                        color: Color(0xFF1C1C1E),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Contact Agent',
+                        style: TextStyle(
+                          color: Color(0xFF1C1C1E),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -817,6 +860,36 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _launchPhoneDialer(String phoneNumber) async {
+    // Remove any non-digit characters except + for international numbers
+    final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri phoneUri = Uri(scheme: 'tel', path: cleanPhone);
+    
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to open phone dialer'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening phone dialer: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildSelectAgentSection() {
@@ -1178,7 +1251,8 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
   }
 
   Widget _buildCTABar() {
-    if (!_isComplaintCreator()) return const SizedBox.shrink();
+    // Only show Edit/Delete buttons if user is the creator AND status is RAISED
+    if (!_isComplaintCreator() || !_isRaised()) return const SizedBox.shrink();
     
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),

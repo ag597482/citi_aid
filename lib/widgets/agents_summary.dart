@@ -496,19 +496,16 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-                                  GridView.builder(
+                                  ListView.builder(
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics(),
-                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 1,
-                                      childAspectRatio: 1.1,
-                                      crossAxisSpacing: 16,
-                                      mainAxisSpacing: 16,
-                                    ),
                                     itemCount: _filteredAgents.length,
                                     itemBuilder: (context, index) {
                                       final agent = _filteredAgents[index] as Map<String, dynamic>;
-                                      return _buildAgentCard(agent);
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 16),
+                                        child: _buildAgentCard(agent),
+                                      );
                                     },
                                   ),
                                 ],
@@ -556,6 +553,7 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Agent Information Section
             Row(
@@ -679,11 +677,11 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             
             // Department
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: const Color(0xFF136AF6).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -708,11 +706,11 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             
             // Password Section
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: const Color(0xFFF5F7F8),
                 borderRadius: BorderRadius.circular(8),
@@ -726,6 +724,7 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'Password',
@@ -739,15 +738,18 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                         Text(
                           password,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Color(0xFF111318),
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.w600,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFF136AF6).withOpacity(0.1),
@@ -757,16 +759,18 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                       onPressed: () => _copyToClipboard(password, 'Password'),
                       icon: const Icon(
                         Icons.copy,
-                        size: 20,
+                        size: 18,
                         color: Color(0xFF136AF6),
                       ),
                       tooltip: 'Copy password',
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
             // Document Section
             if (hasDocument)
@@ -902,7 +906,7 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
             
             // Complaint Statistics Section
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFFF5F7F8),
                 borderRadius: BorderRadius.circular(12),
@@ -913,26 +917,27 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
                       Icon(
                         Icons.assignment,
-                        size: 18,
+                        size: 16,
                         color: Colors.grey.shade700,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       const Text(
                         'Complaint Statistics',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF111318),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -943,7 +948,7 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                           Icons.assignment_outlined,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: _buildStatItem(
                           'In Progress',
@@ -952,7 +957,7 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
                           Icons.work_outline,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: _buildStatItem(
                           'Closed',
@@ -974,7 +979,7 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
 
   Widget _buildStatItem(String label, String value, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -984,17 +989,18 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            size: 20,
+            size: 18,
             color: color,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: color,
             ),
@@ -1003,7 +1009,7 @@ class _AgentsSummaryPageState extends State<AgentsSummaryPage> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: Colors.grey.shade600,
               fontWeight: FontWeight.w500,
             ),

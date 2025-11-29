@@ -229,7 +229,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                                       crossAxisCount: 2,
                                       mainAxisSpacing: isVerySmallScreen ? 8 : (isSmallScreen ? 12 : 16),
                                       crossAxisSpacing: isVerySmallScreen ? 8 : (isSmallScreen ? 12 : 16),
-                                      childAspectRatio: isVerySmallScreen ? 1.6 : (isSmallScreen ? 1.5 : 1.4),
+                                      childAspectRatio: isVerySmallScreen ? 1.25 : (isSmallScreen ? 1.2 : 1.15),
                                       children: [
                                         _buildSummaryCard(
                                           'Open',
@@ -294,7 +294,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                                 crossAxisCount: 2,
                                 mainAxisSpacing: isVerySmallScreen ? 8 : (isSmallScreen ? 12 : 16),
                                 crossAxisSpacing: isVerySmallScreen ? 8 : (isSmallScreen ? 12 : 16),
-                                childAspectRatio: isVerySmallScreen ? 1.4 : (isSmallScreen ? 1.3 : 1.2),
+                                childAspectRatio: isVerySmallScreen ? 1.25 : (isSmallScreen ? 1.2 : 1.15),
                                 children: [
                                   _buildQuickActionCard(
                                     icon: Icons.person_add,
@@ -383,49 +383,72 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate available height for the number
+          final iconSize = isVerySmallScreen ? 16.0 : (isSmallScreen ? 18.0 : 20.0);
+          final iconPadding = isVerySmallScreen ? 5.0 : (isSmallScreen ? 6.0 : 8.0);
+          final iconTotalHeight = iconSize + (iconPadding * 2);
+          final labelHeight = isVerySmallScreen ? 11.0 : (isSmallScreen ? 12.0 : 13.0);
+          final spacing1 = isVerySmallScreen ? 8.0 : (isSmallScreen ? 10.0 : 12.0);
+          final spacing2 = isVerySmallScreen ? 4.0 : (isSmallScreen ? 6.0 : 8.0);
+          final availableHeight = constraints.maxHeight - iconTotalHeight - labelHeight - spacing1 - spacing2;
+          
+          // Calculate font size based on available space (use 50% of available height for the number)
+          final numberFontSize = (availableHeight * 0.5).clamp(18.0, 50.0);
+          
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: EdgeInsets.all(isVerySmallScreen ? 5 : (isSmallScreen ? 6 : 8)),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(iconPadding),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: iconSize,
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+              SizedBox(height: spacing1),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: isVerySmallScreen ? 11 : (isSmallScreen ? 12 : 13),
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF64748B),
+                  letterSpacing: 0.2,
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: isVerySmallScreen ? 16 : (isSmallScreen ? 18 : 20),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: spacing2),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: numberFontSize,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
                 ),
               ),
-              const Spacer(),
             ],
-          ),
-          SizedBox(height: isVerySmallScreen ? 6 : (isSmallScreen ? 8 : 12)),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isVerySmallScreen ? 11 : (isSmallScreen ? 12 : 13),
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF64748B),
-              letterSpacing: 0.2,
-            ),
-          ),
-          SizedBox(height: isVerySmallScreen ? 4 : (isSmallScreen ? 6 : 8)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isVerySmallScreen ? 24 : (isSmallScreen ? 28 : 32),
-              fontWeight: FontWeight.bold,
-              color: color,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -491,16 +514,18 @@ class _AdminHomePageState extends State<AdminHomePage> {
               ),
             ),
             SizedBox(height: isVerySmallScreen ? 6 : (isSmallScreen ? 8 : 12)),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: isVerySmallScreen ? 12 : (isSmallScreen ? 13 : 15),
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1E293B),
-                letterSpacing: 0.2,
+            Flexible(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: isVerySmallScreen ? 11 : (isSmallScreen ? 12 : 14),
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1E293B),
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
           ],

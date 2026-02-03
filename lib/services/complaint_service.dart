@@ -75,6 +75,8 @@ class ComplaintService {
   ///   department: 'ELECTRICITY',
   ///   severity: 'LOW',
   ///   beforePhoto: 'base64_encoded_string', // optional
+  ///   crowdFundingEnabled: true, // optional
+  ///   targetFund: 5000, // optional
   /// );
   /// ```
   Future<ApiResponse<Map<String, dynamic>>> createComplaint({
@@ -84,6 +86,8 @@ class ComplaintService {
     required String department, // ELECTRICITY, POTHOLES, DRAINAGE, GARBAGE, etc.
     required String severity, // LOW, MEDIUM, HIGH
     String? beforePhoto, // Optional base64 encoded image string
+    bool? crowdFundingEnabled, // Optional crowdfunding toggle
+    double? targetFund, // Optional target funding amount
   }) async {
     // Get customerId from local storage
     final authService = AuthService();
@@ -110,6 +114,14 @@ class ComplaintService {
       body['beforePhoto'] = beforePhoto;
     }
 
+    // Add crowdfunding fields if provided
+    if (crowdFundingEnabled != null) {
+      body['crowdFundingEnabled'] = crowdFundingEnabled;
+    }
+    if (targetFund != null) {
+      body['targetFund'] = targetFund;
+    }
+
     return await _api.post<Map<String, dynamic>>(
       ApiEndpoints.complaints,
       body: body,
@@ -128,6 +140,8 @@ class ComplaintService {
     String? severity,
     String? status,
     String? agentId,
+    bool? crowdFundingEnabled,
+    double? targetFund,
   }) async {
     final body = <String, dynamic>{};
     if (title != null) body['title'] = title;
@@ -139,6 +153,8 @@ class ComplaintService {
     if (severity != null) body['severity'] = severity;
     if (status != null) body['status'] = status;
     if (agentId != null) body['agentId'] = agentId;
+    if (crowdFundingEnabled != null) body['crowdFundingEnabled'] = crowdFundingEnabled;
+    if (targetFund != null) body['targetFund'] = targetFund;
 
     return await _api.put<Map<String, dynamic>>(
       ApiEndpoints.complaintById(id),
@@ -330,6 +346,36 @@ class ComplaintService {
         error: 'Either imageFile or imageBytes must be provided',
       );
     }
+  }
+
+  /// Contribute to a complaint
+  /// 
+  /// Example:
+  /// ```dart
+  /// final response = await complaintService.contribute(
+  ///   customerId: 'customer123',
+  ///   complaintId: 'complaint456',
+  ///   amount: 500,
+  /// );
+  /// ```
+  Future<ApiResponse<Map<String, dynamic>>> contribute({
+    required String customerId,
+    required String complaintId,
+    required double amount,
+  }) async {
+    if (amount < 1) {
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        error: 'Contribution amount must be at least 1',
+      );
+    }
+
+    return await _api.post<Map<String, dynamic>>(
+      ApiEndpoints.contribute(customerId, complaintId),
+      body: {
+        'amount': amount,
+      },
+    );
   }
 }
 

@@ -5,6 +5,44 @@ import 'complaint_detail.dart';
 import '../services/complaint_service.dart';
 import '../api/api_config.dart';
 
+class ContributorResponse {
+  final String contributorId;
+  final String contributorName;
+  final String contributorEmail;
+  final double amount;
+  final DateTime contributedAt;
+
+  ContributorResponse({
+    required this.contributorId,
+    required this.contributorName,
+    required this.contributorEmail,
+    required this.amount,
+    required this.contributedAt,
+  });
+
+  factory ContributorResponse.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue == null) return DateTime.now();
+      if (dateValue is String) {
+        try {
+          return DateTime.parse(dateValue);
+        } catch (e) {
+          return DateTime.now();
+        }
+      }
+      return DateTime.now();
+    }
+
+    return ContributorResponse(
+      contributorId: json['contributorId']?.toString() ?? '',
+      contributorName: json['contributorName']?.toString() ?? '',
+      contributorEmail: json['contributorEmail']?.toString() ?? '',
+      amount: (json['amount'] is int ? json['amount'].toDouble() : json['amount'] as double?) ?? 0.0,
+      contributedAt: parseDate(json['contributedAt']),
+    );
+  }
+}
+
 class Complaint {
   final String id;
   final String title;
@@ -20,6 +58,11 @@ class Complaint {
   final DateTime createdAt;
   final DateTime? assignedAt;
   final DateTime? completedAt;
+  // Crowdfunding fields
+  final bool crowdFundingEnabled;
+  final double? targetFund;
+  final double fundCollected;
+  final List<ContributorResponse> contributors;
 
   Complaint({
     required this.id,
@@ -36,6 +79,10 @@ class Complaint {
     required this.createdAt,
     this.assignedAt,
     this.completedAt,
+    this.crowdFundingEnabled = false,
+    this.targetFund,
+    this.fundCollected = 0.0,
+    this.contributors = const [],
   });
 
   /// Create Complaint from API response JSON
@@ -74,6 +121,23 @@ class Complaint {
       }
       return null;
     }
+
+    // Parse contributors
+    List<ContributorResponse> contributors = [];
+    if (json['contributors'] != null && json['contributors'] is List) {
+      contributors = (json['contributors'] as List)
+          .map((item) => ContributorResponse.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }
+
+    // Parse crowdfunding fields
+    final crowdFundingEnabled = json['crowdFundingEnabled'] as bool? ?? false;
+    final targetFund = json['targetFund'] != null
+        ? (json['targetFund'] is int ? json['targetFund'].toDouble() : json['targetFund'] as double?)
+        : null;
+    final fundCollected = json['fundCollected'] != null
+        ? (json['fundCollected'] is int ? json['fundCollected'].toDouble() : json['fundCollected'] as double? ?? 0.0)
+        : 0.0;
     
     return Complaint(
       id: json['id']?.toString() ?? '',
@@ -90,6 +154,10 @@ class Complaint {
       createdAt: parseDate(json['createdAt']) ?? DateTime.now(),
       assignedAt: parseDate(json['assignedAt']),
       completedAt: parseDate(json['completedAt']),
+      crowdFundingEnabled: crowdFundingEnabled,
+      targetFund: targetFund,
+      fundCollected: fundCollected,
+      contributors: contributors,
     );
   }
 
@@ -731,6 +799,99 @@ class _FeedPageState extends State<FeedPage> {
                                               ],
                                             ),
                                             const SizedBox(height: 12),
+                                            // Crowdfunding section
+                                            if (complaint.crowdFundingEnabled) ...[
+                                              Container(
+                                                padding: const EdgeInsets.all(12),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF136AF6).withOpacity(0.05),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: const Color(0xFF136AF6).withOpacity(0.2),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.favorite,
+                                                          size: 16,
+                                                          color: const Color(0xFF136AF6),
+                                                        ),
+                                                        const SizedBox(width: 6),
+                                                        const Text(
+                                                          'Crowdfunding',
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: Color(0xFF136AF6),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    if (complaint.targetFund != null) ...[
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            '₹${complaint.fundCollected.toStringAsFixed(0)} / ₹${complaint.targetFund!.toStringAsFixed(0)}',
+                                                            style: const TextStyle(
+                                                              fontSize: 13,
+                                                              fontWeight: FontWeight.bold,
+                                                              color: Color(0xFF1E293B),
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            '${((complaint.fundCollected / complaint.targetFund!) * 100).toStringAsFixed(0)}%',
+                                                            style: const TextStyle(
+                                                              fontSize: 12,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: Color(0xFF136AF6),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      ClipRRect(
+                                                        borderRadius: BorderRadius.circular(4),
+                                                        child: LinearProgressIndicator(
+                                                          value: complaint.targetFund! > 0
+                                                              ? (complaint.fundCollected / complaint.targetFund!).clamp(0.0, 1.0)
+                                                              : 0.0,
+                                                          minHeight: 6,
+                                                          backgroundColor: const Color(0xFFE2E8F0),
+                                                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF136AF6)),
+                                                        ),
+                                                      ),
+                                                    ] else ...[
+                                                      Text(
+                                                        '₹${complaint.fundCollected.toStringAsFixed(0)} raised',
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Color(0xFF1E293B),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    if (complaint.contributors.isNotEmpty) ...[
+                                                      const SizedBox(height: 6),
+                                                      Text(
+                                                        '${complaint.contributors.length} contributor${complaint.contributors.length == 1 ? '' : 's'}',
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                          color: Color(0xFF64748B),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(height: 12),
+                                            ],
                                             Container(
                                               height: 1,
                                               color: const Color(0xFFE2E8F0),

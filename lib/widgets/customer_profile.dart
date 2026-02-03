@@ -21,7 +21,8 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   Map<String, dynamic>? _profileData;
   List<dynamic> _activeComplaints = [];
   List<dynamic> _closedComplaints = [];
-  String _selectedTab = 'active'; // 'active' or 'closed'
+  List<dynamic> _contributions = [];
+  String _selectedTab = 'active'; // 'active', 'closed', or 'contributions'
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           _profileData = response.data;
           _activeComplaints = response.data!['activeComplaints'] as List<dynamic>? ?? [];
           _closedComplaints = response.data!['closedComplaints'] as List<dynamic>? ?? [];
+          _contributions = response.data!['contributions'] as List<dynamic>? ?? [];
           _isLoading = false;
         });
       } else {
@@ -354,13 +356,22 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                       onTap: () => setState(() => _selectedTab = 'active'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildTabButton(
                       label: 'Closed',
                       count: _closedComplaints.length,
                       isSelected: _selectedTab == 'closed',
                       onTap: () => setState(() => _selectedTab = 'closed'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildTabButton(
+                      label: 'Contributions',
+                      count: _contributions.length,
+                      isSelected: _selectedTab == 'contributions',
+                      onTap: () => setState(() => _selectedTab = 'contributions'),
                     ),
                   ),
                 ],
@@ -525,6 +536,10 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   }
 
   Widget _buildComplaintsList() {
+    if (_selectedTab == 'contributions') {
+      return _buildContributionsList();
+    }
+
     final complaints = _selectedTab == 'active' ? _activeComplaints : _closedComplaints;
 
     if (complaints.isEmpty) {
@@ -584,6 +599,200 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
         final complaint = complaints[index] as Map<String, dynamic>;
         return _buildComplaintCard(complaint);
       },
+    );
+  }
+
+  Widget _buildContributionsList() {
+    if (_contributions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.favorite_outline,
+                size: 56,
+                color: const Color(0xFF5F708C).withOpacity(0.4),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No contributions yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF5F708C),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Start contributing to complaints to help your community!',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF5F708C),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      itemCount: _contributions.length,
+      itemBuilder: (context, index) {
+        final contribution = _contributions[index] as Map<String, dynamic>;
+        return _buildContributionCard(contribution);
+      },
+    );
+  }
+
+  Widget _buildContributionCard(Map<String, dynamic> contribution) {
+    final complaint = contribution['complaint'] as Map<String, dynamic>?;
+    final amount = contribution['amount'] != null
+        ? (contribution['amount'] is int 
+            ? contribution['amount'].toDouble() 
+            : contribution['amount'] as double? ?? 0.0)
+        : 0.0;
+    final createdAt = contribution['createdAt']?.toString() ?? '';
+
+    String formatDate(String? dateStr) {
+      if (dateStr == null || dateStr.isEmpty) return '';
+      try {
+        final date = DateTime.parse(dateStr);
+        final now = DateTime.now();
+        final difference = now.difference(date);
+
+        if (difference.inDays > 0) {
+          return '${difference.inDays}d ago';
+        } else if (difference.inHours > 0) {
+          return '${difference.inHours}h ago';
+        } else if (difference.inMinutes > 0) {
+          return '${difference.inMinutes}m ago';
+        } else {
+          return 'Just now';
+        }
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    final complaintTitle = complaint?['title']?.toString() ?? 'Unknown Complaint';
+    final complaintId = complaint?['id']?.toString() ?? '';
+
+    return GestureDetector(
+      onTap: () {
+        if (complaintId.isNotEmpty) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ComplaintDetailPage(
+                complaintId: complaintId,
+              ),
+            ),
+          );
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF136AF6), Color(0xFF0D5AE0)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.favorite,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    complaintTitle,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111318),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                        formatDate(createdAt),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF5F708C),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '₹${amount.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF136AF6),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Contributed',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF5F708C),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 

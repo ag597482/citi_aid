@@ -27,9 +27,11 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
+  late TextEditingController _targetFundController;
   late String _selectedSeverity;
   String? _selectedDepartment;
   bool _isLoading = false;
+  bool _crowdFundingEnabled = false;
   dynamic _selectedImage; // dart:io.File on non-web, null on web
   Uint8List? _selectedImageBytes; // For web compatibility
   String? _existingImageUrl; // URL of existing image
@@ -58,6 +60,15 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
     _selectedSeverity = widget.complaint['severity'] ?? 'MEDIUM';
     _selectedDepartment = widget.complaint['department'] ?? null;
     _existingImageUrl = widget.complaint['beforePhoto'] as String?;
+    _crowdFundingEnabled = widget.complaint['crowdFundingEnabled'] as bool? ?? false;
+    final targetFund = widget.complaint['targetFund'];
+    if (targetFund != null) {
+      _targetFundController = TextEditingController(
+        text: (targetFund is int ? targetFund.toDouble() : targetFund as double? ?? 0.0).toStringAsFixed(0),
+      );
+    } else {
+      _targetFundController = TextEditingController();
+    }
     
     // Set selected category
     if (_selectedDepartment != null) {
@@ -101,6 +112,7 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _targetFundController.dispose();
     super.dispose();
   }
 
@@ -321,6 +333,15 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
         }
       }
 
+      // Parse target fund if crowdfunding is enabled
+      double? targetFund;
+      if (_crowdFundingEnabled && _targetFundController.text.trim().isNotEmpty) {
+        final parsed = double.tryParse(_targetFundController.text.trim());
+        if (parsed != null && parsed > 0) {
+          targetFund = parsed;
+        }
+      }
+
       // Update complaint - only send fields that can be edited from UI
       // Preserve other fields (status, agentId, afterPhoto) from existing complaint
       final response = await _complaintService.updateComplaint(
@@ -336,6 +357,9 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
         status: widget.complaint['status'] as String?,
         agentId: agentId,
         afterPhoto: widget.complaint['afterPhoto'] as String?,
+        // Crowdfunding fields
+        crowdFundingEnabled: _crowdFundingEnabled,
+        targetFund: targetFund,
       );
 
       setState(() => _isLoading = false);
@@ -889,6 +913,110 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Crowdfunding section
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _crowdFundingEnabled,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _crowdFundingEnabled = value ?? false;
+                                      if (!_crowdFundingEnabled) {
+                                        _targetFundController.clear();
+                                      }
+                                    });
+                                  },
+                                  activeColor: const Color(0xFF136AF6),
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Enable Crowdfunding',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF1E293B),
+                                          letterSpacing: 0.2,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Allow others to contribute funds to help resolve this issue',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_crowdFundingEnabled) ...[
+                              const SizedBox(height: 16),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Target Fund Amount (₹)',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1E293B),
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Container(
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF5F7F8),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: TextField(
+                                      controller: _targetFundController,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      decoration: const InputDecoration(
+                                        hintText: 'Enter target amount (e.g., 5000)',
+                                        hintStyle: TextStyle(
+                                          color: Color(0xFF94A3B8),
+                                          fontSize: 15,
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 20,
+                                          vertical: 18,
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.currency_rupee,
+                                          color: Color(0xFF136AF6),
+                                          size: 22,
+                                        ),
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFF1E293B),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
 

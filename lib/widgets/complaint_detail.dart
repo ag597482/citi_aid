@@ -7,6 +7,7 @@ import '../api/api_config.dart';
 import 'edit_complaint.dart';
 import 'feed_page.dart';
 import 'assign_agent.dart';
+import 'contribute_modal.dart';
 
 class ComplaintDetailPage extends StatefulWidget {
   final dynamic complaintId;
@@ -513,6 +514,10 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                                     ),
 
                                   const SizedBox(height: 24),
+
+                                  // Crowdfunding Section
+                                  if (_complaint!['crowdFundingEnabled'] == true)
+                                    _buildCrowdfundingSection(),
 
                                   // Information Section
                                   Column(
@@ -1246,6 +1251,270 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildCrowdfundingSection() {
+    if (_complaint == null) return const SizedBox.shrink();
+    
+    final crowdFundingEnabled = _complaint!['crowdFundingEnabled'] as bool? ?? false;
+    if (!crowdFundingEnabled) return const SizedBox.shrink();
+
+    final targetFund = _complaint!['targetFund'] != null
+        ? (_complaint!['targetFund'] is int 
+            ? _complaint!['targetFund'].toDouble() 
+            : _complaint!['targetFund'] as double?)
+        : null;
+    final fundCollected = _complaint!['fundCollected'] != null
+        ? (_complaint!['fundCollected'] is int 
+            ? _complaint!['fundCollected'].toDouble() 
+            : _complaint!['fundCollected'] as double? ?? 0.0)
+        : 0.0;
+    final contributors = _complaint!['contributors'] as List<dynamic>? ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Crowdfunding',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1C1C1E),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF136AF6).withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFF136AF6).withOpacity(0.2),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF136AF6).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.favorite,
+                      color: Color(0xFF136AF6),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Help Fund This Issue',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1C1C1E),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (targetFund != null)
+                          Text(
+                            '₹${fundCollected.toStringAsFixed(0)} / ₹${targetFund.toStringAsFixed(0)} raised',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF64748B),
+                            ),
+                          )
+                        else
+                          Text(
+                            '₹${fundCollected.toStringAsFixed(0)} raised',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (targetFund != null && targetFund > 0) ...[
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: (fundCollected / targetFund).clamp(0.0, 1.0),
+                    minHeight: 10,
+                    backgroundColor: const Color(0xFFE2E8F0),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF136AF6)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${((fundCollected / targetFund) * 100).toStringAsFixed(0)}% funded',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF136AF6),
+                      ),
+                    ),
+                    Text(
+                      '${contributors.length} contributor${contributors.length == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                const SizedBox(height: 8),
+                Text(
+                  '${contributors.length} contributor${contributors.length == 1 ? '' : 's'}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => ContributeModal(
+                        complaintId: _complaint!['id']?.toString() ?? '',
+                        complaintTitle: _complaint!['title']?.toString() ?? 'Complaint',
+                        onSuccess: () {
+                          _loadComplaint(); // Refresh complaint data
+                        },
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.favorite, size: 20),
+                  label: const Text(
+                    'Contribute',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF136AF6),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              if (contributors.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                const Text(
+                  'Contributors',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1C1C1E),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...contributors.take(5).map((contributor) {
+                  final contributorMap = contributor as Map<String, dynamic>;
+                  final name = contributorMap['contributorName']?.toString() ?? 'Anonymous';
+                  final amount = contributorMap['amount'] != null
+                      ? (contributorMap['amount'] is int 
+                          ? contributorMap['amount'].toDouble() 
+                          : contributorMap['amount'] as double? ?? 0.0)
+                      : 0.0;
+                  final contributedAt = contributorMap['contributedAt']?.toString();
+                  
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: const Color(0xFF136AF6).withOpacity(0.1),
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : 'A',
+                            style: const TextStyle(
+                              color: Color(0xFF136AF6),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1C1C1E),
+                                ),
+                              ),
+                              if (contributedAt != null)
+                                Text(
+                                  _formatDateTime(contributedAt),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '₹${amount.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF136AF6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                if (contributors.length > 5)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      '+ ${contributors.length - 5} more contributor${contributors.length - 5 == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF136AF6),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
       ],
     );
   }

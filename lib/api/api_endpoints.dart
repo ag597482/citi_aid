@@ -45,6 +45,9 @@ class ApiEndpoints {
   static const String customerComplaints = '/customers/complaints';
   static String customerProfileById(String customerId) => '/user/customer/profile/$customerId';
   
+  // ==================== Contribution Endpoints ====================
+  static String contribute(String customerId, String complaintId) => '/contribute/$customerId/$complaintId';
+  
   // ==================== Admin Endpoints ====================
   static const String adminStats = '/admin/stats';
   static const String adminUsers = '/admin/users';

@@ -7,11 +7,19 @@ class ContributeModal extends StatefulWidget {
   final String complaintTitle;
   final VoidCallback? onSuccess;
 
+  /// When set, contribution cannot exceed [targetFund] - [fundCollected].
+  final double? targetFund;
+
+  /// Amount already raised (defaults to 0).
+  final double fundCollected;
+
   const ContributeModal({
     super.key,
     required this.complaintId,
     required this.complaintTitle,
     this.onSuccess,
+    this.targetFund,
+    this.fundCollected = 0,
   });
 
   @override
@@ -51,6 +59,37 @@ class _ContributeModalState extends State<ContributeModal> {
         ),
       );
       return;
+    }
+
+    // Cannot contribute more than (funding goal - already collected)
+    final goal = widget.targetFund;
+    if (goal != null && goal > 0) {
+      final collected = widget.fundCollected;
+      final remaining = goal - collected;
+      const eps = 1e-6;
+      if (remaining <= eps) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Funding goal has already been reached'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      if (amount > remaining + eps) {
+        final remLabel = (remaining - remaining.round()).abs() < 1e-6
+            ? remaining.round().toString()
+            : remaining.toStringAsFixed(2);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Amount cannot exceed ₹$remLabel (remaining toward the goal)',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
     }
 
     // Get current user
@@ -225,12 +264,27 @@ class _ContributeModalState extends State<ContributeModal> {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Minimum contribution: ₹1',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+            Builder(
+              builder: (context) {
+                final goal = widget.targetFund;
+                final lines = <String>['Minimum contribution: ₹1'];
+                if (goal != null && goal > 0) {
+                  final remaining = goal - widget.fundCollected;
+                  if (remaining > 1e-6) {
+                    final remLabel = (remaining - remaining.round()).abs() < 1e-6
+                        ? remaining.round().toString()
+                        : remaining.toStringAsFixed(2);
+                    lines.add('Maximum toward goal: ₹$remLabel');
+                  }
+                }
+                return Text(
+                  lines.join('\n'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
             Row(

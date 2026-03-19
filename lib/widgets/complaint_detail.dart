@@ -1358,6 +1358,15 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
         : 0.0;
     final contributors = _complaint!['contributors'] as List<dynamic>? ?? [];
 
+    final double? remainingTowardGoal;
+    if (targetFund != null && targetFund > 0) {
+      remainingTowardGoal = targetFund - fundCollected;
+    } else {
+      remainingTowardGoal = null;
+    }
+    final goalFullyFunded =
+        remainingTowardGoal != null && remainingTowardGoal <= 1e-6;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1475,40 +1484,82 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                 ),
               ],
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => ContributeModal(
-                        complaintId: _complaint!['id']?.toString() ?? '',
-                        complaintTitle: _complaint!['title']?.toString() ?? 'Complaint',
-                        onSuccess: () {
-                          _loadComplaint(); // Refresh complaint data
-                        },
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.favorite, size: 20),
-                  label: const Text(
-                    'Contribute',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+              if (goalFullyFunded)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF34C759).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF34C759).withOpacity(0.35),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF136AF6),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle_outline, color: Color(0xFF34C759), size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        'Funding goal reached',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF34C759),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                if (remainingTowardGoal != null && remainingTowardGoal > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'You can contribute up to ₹${(remainingTowardGoal - remainingTowardGoal.round()).abs() < 1e-6 ? remainingTowardGoal.round().toString() : remainingTowardGoal.toStringAsFixed(2)} toward this goal',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
-                    elevation: 0,
+                  ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => ContributeModal(
+                          complaintId: _complaint!['id']?.toString() ?? '',
+                          complaintTitle: _complaint!['title']?.toString() ?? 'Complaint',
+                          targetFund: targetFund,
+                          fundCollected: fundCollected,
+                          onSuccess: () {
+                            _loadComplaint(); // Refresh complaint data
+                          },
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.favorite, size: 20),
+                    label: const Text(
+                      'Contribute',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF136AF6),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
                   ),
                 ),
-              ),
+              ],
               if (contributors.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 const Divider(),

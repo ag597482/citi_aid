@@ -275,6 +275,30 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
       return;
     }
 
+    // Crowdfunding: require a funding goal strictly greater than ₹1
+    if (_crowdFundingEnabled) {
+      final targetText = _targetFundController.text.trim();
+      if (targetText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a crowdfunding goal amount'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      final targetParsed = double.tryParse(targetText);
+      if (targetParsed == null || targetParsed <= 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Crowdfunding goal must be greater than ₹1'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -337,7 +361,7 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
       double? targetFund;
       if (_crowdFundingEnabled && _targetFundController.text.trim().isNotEmpty) {
         final parsed = double.tryParse(_targetFundController.text.trim());
-        if (parsed != null && parsed > 0) {
+        if (parsed != null && parsed > 1) {
           targetFund = parsed;
         }
       }
@@ -1012,6 +1036,14 @@ class _EditComplaintPageState extends State<EditComplaintPage> {
                                         color: Color(0xFF1E293B),
                                         fontWeight: FontWeight.w500,
                                       ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Must be greater than ₹1',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
                                     ),
                                   ),
                                 ],

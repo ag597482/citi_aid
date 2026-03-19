@@ -559,9 +559,13 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
 
                                       const SizedBox(height: 16),
 
-                                      // Assigned Agent or Select Agent button
-                                      if (_hasAgent()) 
+                                      // Assigned Agent, or crowdfunding tag (no assign), or Select Agent
+                                      if (_hasAgent())
                                         _buildAgentSection()
+                                      else if (widget.isAdminView &&
+                                          !_isDiscarded() &&
+                                          (_complaint!['crowdFundingEnabled'] as bool? ?? false))
+                                        _buildCrowdfundingEnabledAdminTagSection()
                                       else if (widget.isAdminView && !_isDiscarded())
                                         _buildSelectAgentSection(),
 
@@ -895,6 +899,87 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
         );
       }
     }
+  }
+
+  /// Admin: complaints with crowdfunding cannot be assigned an agent from here.
+  Widget _buildCrowdfundingEnabledAdminTagSection() {
+    if (_complaint == null) return const SizedBox.shrink();
+
+    const tagColor = Color(0xFF136AF6);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F7F8),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            Icons.volunteer_activism_outlined,
+            color: Color(0xFF8E8E93),
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Agent assignment',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1C1C1E),
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'This complaint uses crowdfunding and is not available for agent assignment.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF8E8E93),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: tagColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: tagColor.withOpacity(0.35),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.campaign_outlined,
+                      size: 18,
+                      color: tagColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Crowdfunding enabled',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tagColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildSelectAgentSection() {

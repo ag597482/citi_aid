@@ -466,35 +466,25 @@ class _MonitorComplaintPageState extends State<MonitorComplaintPage> {
         ? 1
         : _statusCounts.values.reduce((a, b) => a > b ? a : b);
     final maxY = maxCount == 0 ? 10 : (maxCount * 1.2).ceil();
-    final gridLines = 5;
+    const gridLines = 5;
+
+    // Reserve a fixed width for Y-axis labels so they don't overlap bars.
+    const yAxisWidth = 52.0;
+    const tooltipHeight = 42.0;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 50, right: 20, top: 20, bottom: 40),
+      padding: const EdgeInsets.only(right: 20, top: 20, bottom: 40),
       child: Column(
         children: [
-          // Y-axis labels and bars
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                return Stack(
+                final chartHeight = constraints.maxHeight;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Grid lines
-                    ...List.generate(gridLines, (index) {
-                      return Positioned(
-                        left: 0,
-                        right: 0,
-                        top: (index / gridLines) * constraints.maxHeight,
-                        child: Container(
-                          height: 1,
-                          color: Colors.grey[200],
-                        ),
-                      );
-                    }),
-                    // Y-axis labels
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 40,
+                    SizedBox(
+                      width: yAxisWidth,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: List.generate(gridLines, (index) {
@@ -510,103 +500,125 @@ class _MonitorComplaintPageState extends State<MonitorComplaintPage> {
                         }),
                       ),
                     ),
-                    // Bars
-                    Padding(
-                      padding: const EdgeInsets.only(left: 50),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: _statuses.map((status) {
-                          final count = _statusCounts[status] ?? 0;
-                          final isSelected = _selectedStatus == status;
-                          final barHeight = maxY > 0 ? (count / maxY) : 0.0;
+                    Expanded(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Grid lines across the chart area.
+                          ...List.generate(gridLines, (index) {
+                            final top = (index / gridLines) * chartHeight;
+                            return Positioned(
+                              left: 0,
+                              right: 0,
+                              top: top,
+                              child: Container(
+                                height: 1,
+                                color: Colors.grey[200],
+                              ),
+                            );
+                          }),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: _statuses.map((status) {
+                                final count = _statusCounts[status] ?? 0;
+                                final isSelected = _selectedStatus == status;
+                                final rawBarHeight = maxY > 0 ? (count / maxY) : 0.0;
+                                final barHeight = rawBarHeight.clamp(0.0, 1.0);
 
-                          return Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedStatus = status;
-                                });
-                              },
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  // Tooltip on selection
-                                  AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 300),
-                                    child: isSelected
-                                        ? Container(
-                                            key: ValueKey('tooltip-$status'),
-                                            margin: const EdgeInsets.only(bottom: 8),
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[800],
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              '${_getStatusChartLabel(status)}\n$count',
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          )
-                                        : const SizedBox.shrink(key: ValueKey('empty')),
-                                  ),
-                                  // Bar
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          Expanded(
-                                            child: TweenAnimationBuilder<double>(
-                                              tween: Tween<double>(begin: 0.0, end: barHeight),
-                                              duration: const Duration(milliseconds: 800),
-                                              curve: Curves.easeOutCubic,
-                                              builder: (context, animatedHeight, child) {
-                                                return FractionallySizedBox(
-                                                  heightFactor: animatedHeight,
-                                                  child: AnimatedContainer(
-                                                    duration: const Duration(milliseconds: 300),
-                                                    curve: Curves.easeInOut,
-                                                    decoration: BoxDecoration(
-                                                      color: _getStatusChartColor(status),
-                                                      borderRadius: const BorderRadius.vertical(
-                                                        top: Radius.circular(8),
-                                                      ),
-                                                      border: isSelected
-                                                          ? Border.all(
-                                                              color: Colors.black,
-                                                              width: 2,
-                                                            )
-                                                          : null,
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: _getStatusChartColor(status).withOpacity(
-                                                            isSelected ? 0.5 : 0.3,
-                                                          ),
-                                                          blurRadius: isSelected ? 12 : 8,
-                                                          offset: Offset(0, isSelected ? 6 : 4),
-                                                        ),
-                                                      ],
+                                return Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedStatus = status;
+                                      });
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        SizedBox(
+                                          height: tooltipHeight,
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(milliseconds: 300),
+                                            child: isSelected
+                                                ? Container(
+                                                    key: ValueKey('tooltip-$status'),
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 6,
                                                     ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[800],
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: Text(
+                                                      '${_getStatusChartLabel(status)}\n$count',
+                                                      textAlign: TextAlign.center,
+                                                      maxLines: 2,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const SizedBox.shrink(
+                                                    key: ValueKey('empty'),
                                                   ),
-                                                );
-                                              },
-                                            ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        Expanded(
+                                          child: TweenAnimationBuilder<double>(
+                                            tween: Tween<double>(
+                                              begin: 0.0,
+                                              end: barHeight,
+                                            ),
+                                            duration: const Duration(milliseconds: 800),
+                                            curve: Curves.easeOutCubic,
+                                            builder: (context, animatedHeight, child) {
+                                              return FractionallySizedBox(
+                                                heightFactor: animatedHeight,
+                                                alignment: Alignment.bottomCenter,
+                                                child: AnimatedContainer(
+                                                  duration: const Duration(milliseconds: 300),
+                                                  curve: Curves.easeInOut,
+                                                  decoration: BoxDecoration(
+                                                    color: _getStatusChartColor(status),
+                                                    borderRadius: const BorderRadius.vertical(
+                                                      top: Radius.circular(8),
+                                                    ),
+                                                    border: isSelected
+                                                        ? Border.all(
+                                                            color: Colors.black,
+                                                            width: 2,
+                                                          )
+                                                        : null,
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color:
+                                                            _getStatusChartColor(status).withOpacity(
+                                                          isSelected ? 0.5 : 0.3,
+                                                        ),
+                                                        blurRadius: isSelected ? 12 : 8,
+                                                        offset: Offset(0, isSelected ? 6 : 4),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
+                                );
+                              }).toList(),
                             ),
-                          );
-                        }).toList(),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -614,25 +626,30 @@ class _MonitorComplaintPageState extends State<MonitorComplaintPage> {
               },
             ),
           ),
-          // X-axis labels
+
+          // X-axis labels aligned with bars.
           const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(left: 50),
-            child: Row(
-              children: _statuses.map((status) {
-                return Expanded(
-                  child: Text(
-                    _getStatusChartLabel(status),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _getStatusChartColor(status),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+          Row(
+            children: [
+              const SizedBox(width: yAxisWidth),
+              Expanded(
+                child: Row(
+                  children: _statuses.map((status) {
+                    return Expanded(
+                      child: Text(
+                        _getStatusChartLabel(status),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: _getStatusChartColor(status),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
         ],
       ),

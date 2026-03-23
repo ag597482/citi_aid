@@ -398,10 +398,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
           final numberFontSize = (availableHeight * 0.5).clamp(18.0, 50.0);
           
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     padding: EdgeInsets.all(iconPadding),
@@ -415,12 +416,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
                       size: iconSize,
                     ),
                   ),
-                  const Spacer(),
                 ],
               ),
               SizedBox(height: spacing1),
               Text(
                 label,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isVerySmallScreen ? 11 : (isSmallScreen ? 12 : 13),
                   fontWeight: FontWeight.w500,
@@ -434,9 +435,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
               Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
+                  alignment: Alignment.center,
                   child: Text(
                     value,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: numberFontSize,
                       fontWeight: FontWeight.bold,

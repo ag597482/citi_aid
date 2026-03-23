@@ -235,6 +235,16 @@ class _MonitorComplaintPageState extends State<MonitorComplaintPage> {
     }
   }
 
+  /// Keep axis labels compact and single-line on narrow screens.
+  String _getStatusAxisLabel(String status) {
+    switch (status) {
+      case 'IN_PROGRESS':
+        return 'In Progress';
+      default:
+        return _getStatusChartLabel(status);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -473,7 +483,7 @@ class _MonitorComplaintPageState extends State<MonitorComplaintPage> {
     const tooltipHeight = 42.0;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 20, top: 20, bottom: 40),
+      padding: const EdgeInsets.fromLTRB(8, 20, 8, 40),
       child: Column(
         children: [
           Expanded(
@@ -636,13 +646,22 @@ class _MonitorComplaintPageState extends State<MonitorComplaintPage> {
                 child: Row(
                   children: _statuses.map((status) {
                     return Expanded(
-                      child: Text(
-                        _getStatusChartLabel(status),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: _getStatusChartColor(status),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _getStatusAxisLabel(status),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.fade,
+                            style: TextStyle(
+                              color: _getStatusChartColor(status),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ),
                     );

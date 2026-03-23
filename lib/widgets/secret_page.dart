@@ -11,7 +11,7 @@ class SecretPage extends StatefulWidget {
 }
 
 class _SecretPageState extends State<SecretPage> {
-  static const String _railwayUrl = 'https://citiaidbackend-mongodb.up.railway.app/';
+  static const String _railwayUrl = 'https://citiaidbackend-mongodb.up.railway.app';
   static const String _localhostUrl = 'http://localhost:8080';
   final TextEditingController _baseUrlController = TextEditingController();
   final TextEditingController _keyController = TextEditingController();

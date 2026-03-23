@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
+import '../api/api_config.dart';
 
 class SecretPage extends StatefulWidget {
   const SecretPage({super.key});
@@ -10,12 +11,22 @@ class SecretPage extends StatefulWidget {
 }
 
 class _SecretPageState extends State<SecretPage> {
+  static const String _railwayUrl = 'https://citiaidbackend-mongodb.up.railway.app/';
+  static const String _localhostUrl = 'http://localhost:8080';
   final TextEditingController _baseUrlController = TextEditingController();
   final TextEditingController _keyController = TextEditingController();
   final TextEditingController _valueController = TextEditingController();
   Map<String, dynamic> _storageData = {};
   bool _isLoading = false;
   String? _currentBaseUrl;
+  String _selectedBaseUrlOption = 'railway';
+
+  String _normalizeUrl(String url) {
+    if (url.endsWith('/')) {
+      return url.substring(0, url.length - 1);
+    }
+    return url;
+  }
 
   @override
   void initState() {
@@ -35,16 +46,37 @@ class _SecretPageState extends State<SecretPage> {
   /// Load current baseUrl from storage
   Future<void> _loadBaseUrl() async {
     final prefs = await SharedPreferences.getInstance();
-    final baseUrl = prefs.getString('baseUrl');
+    final baseUrl = prefs.getString('baseUrl') ?? ApiConfig.defaultBaseUrl;
+    final normalized = _normalizeUrl(baseUrl);
+    final normalizedRailway = _normalizeUrl(_railwayUrl);
+    final normalizedLocalhost = _normalizeUrl(_localhostUrl);
+
+    String selectedOption = 'custom';
+    if (normalized == normalizedRailway) {
+      selectedOption = 'railway';
+    } else if (normalized == normalizedLocalhost) {
+      selectedOption = 'localhost';
+    }
+
     setState(() {
       _currentBaseUrl = baseUrl;
-      _baseUrlController.text = baseUrl ?? '';
+      _selectedBaseUrlOption = selectedOption;
+      _baseUrlController.text = selectedOption == 'custom' ? baseUrl : '';
     });
   }
 
   /// Save baseUrl to SharedPreferences
   Future<void> _saveBaseUrl() async {
-    if (_baseUrlController.text.trim().isEmpty) {
+    String urlToSave;
+    if (_selectedBaseUrlOption == 'railway') {
+      urlToSave = _railwayUrl;
+    } else if (_selectedBaseUrlOption == 'localhost') {
+      urlToSave = _localhostUrl;
+    } else {
+      urlToSave = _baseUrlController.text.trim();
+    }
+
+    if (urlToSave.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a base URL'),
@@ -58,13 +90,13 @@ class _SecretPageState extends State<SecretPage> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('baseUrl', _baseUrlController.text.trim());
+      await prefs.setString('baseUrl', urlToSave);
       
       // Update ApiClient baseUrl
       await ApiClient().updateBaseUrl();
       
       setState(() {
-        _currentBaseUrl = _baseUrlController.text.trim();
+        _currentBaseUrl = urlToSave;
         _isLoading = false;
       });
 
@@ -101,6 +133,7 @@ class _SecretPageState extends State<SecretPage> {
       
       setState(() {
         _currentBaseUrl = null;
+        _selectedBaseUrlOption = 'railway';
         _baseUrlController.clear();
         _isLoading = false;
       });
@@ -213,6 +246,7 @@ class _SecretPageState extends State<SecretPage> {
       if (key == 'baseUrl') {
         await ApiClient().updateBaseUrl();
         _currentBaseUrl = null;
+        _selectedBaseUrlOption = 'railway';
         _baseUrlController.clear();
       }
 
@@ -269,7 +303,7 @@ class _SecretPageState extends State<SecretPage> {
                           Text(
                             _currentBaseUrl != null
                                 ? 'Current: $_currentBaseUrl'
-                                : 'Current: Using default (http://localhost:8080)',
+                                : 'Current: Using default (${ApiConfig.defaultBaseUrl})',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -277,17 +311,57 @@ class _SecretPageState extends State<SecretPage> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          TextField(
-                            controller: _baseUrlController,
+                          DropdownButtonFormField<String>(
+                            value: _selectedBaseUrlOption,
                             decoration: InputDecoration(
-                              labelText: 'Base URL',
-                              hintText: 'http://localhost:8080',
+                              labelText: 'Select Base URL',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              prefixIcon: const Icon(Icons.api),
+                              prefixIcon: const Icon(Icons.link),
                             ),
+                            items: const [
+                              DropdownMenuItem<String>(
+                                value: 'railway',
+                                child: Text('Railway (Production)'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: 'localhost',
+                                child: Text('Localhost'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: 'custom',
+                                child: Text('Custom URL'),
+                              ),
+                            ],
+                            onChanged: _isLoading
+                                ? null
+                                : (value) {
+                                    if (value == null) return;
+                                    setState(() {
+                                      _selectedBaseUrlOption = value;
+                                      if (value == 'railway') {
+                                        _baseUrlController.text = '';
+                                      } else if (value == 'localhost') {
+                                        _baseUrlController.text = '';
+                                      }
+                                    });
+                                  },
                           ),
+                          if (_selectedBaseUrlOption == 'custom') ...[
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _baseUrlController,
+                              decoration: InputDecoration(
+                                labelText: 'Custom Base URL',
+                                hintText: 'https://your-api-url.com',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                prefixIcon: const Icon(Icons.api),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           Row(
                             children: [

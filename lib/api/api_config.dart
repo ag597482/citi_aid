@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Base URL can be overridden from SharedPreferences with key "baseUrl"
 class ApiConfig {
   // Default Base URL - Used if not set in SharedPreferences
-  static const String defaultBaseUrl = 'http://localhost:8080';
+  static const String defaultBaseUrl = 'https://citiaidbackend-mongodb.up.railway.app/';
   
   // API version prefix (if your API uses versioning)
   // Set to empty string if no version prefix needed

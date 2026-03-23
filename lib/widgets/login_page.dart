@@ -33,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
     if (_emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter your email or phone number'),
+          content: Text('Please enter your email'),
           backgroundColor: Colors.red,
         ),
       );
@@ -261,7 +261,7 @@ class _LoginPageState extends State<LoginPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Email or Phone Number',
+                              'Email',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -283,7 +283,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: TextField(
                                 controller: _emailController,
                                 decoration: const InputDecoration(
-                                  hintText: 'Enter your email or phone number',
+                                  hintText: 'Enter your email',
                                   hintStyle: TextStyle(
                                     color: Color(0xFF94A3B8),
                                     fontSize: 15,

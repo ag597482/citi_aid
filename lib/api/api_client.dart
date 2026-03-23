@@ -171,16 +171,32 @@ class ApiClient {
     T Function(dynamic)? fromJson,
     CancelToken? cancelToken,
   }) async {
-    try {
+    Future<ApiResponse<T>> _doRequest() async {
       final response = await _dio.get(
         endpoint,
         queryParameters: queryParams,
         options: Options(headers: headers),
         cancelToken: cancelToken,
       );
-
       return _handleResponse<T>(response, fromJson);
+    }
+
+    try {
+      return await _doRequest();
     } on DioException catch (e) {
+      final isTimeout = e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout;
+
+      // Retry once for timeouts (GET is safe) to avoid flaky "request timeout" on slow responses.
+      if (isTimeout && cancelToken == null) {
+        try {
+          return await _doRequest();
+        } catch (_) {
+          // Fall through to return the original timeout error below.
+        }
+      }
+
       return _handleError<T>(e);
     } catch (e) {
       return ApiResponse<T>(

@@ -169,10 +169,9 @@ class AuthService {
   }
 
   /// Logout user
-  /// Clears both auth token and user data
+  /// Clears all locally persisted session context
   Future<void> logout() async {
-    await _api.clearAuthToken();
-    await _api.clearUser();
+    await _api.clearSessionContext();
   }
 
   /// Get current logged-in user from local storage

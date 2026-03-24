@@ -504,5 +504,24 @@ class ApiClient {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user');
   }
+
+  /// Clear locally persisted login/session context.
+  /// Keeps non-session app settings (like baseUrl) untouched.
+  Future<void> clearSessionContext() async {
+    final prefs = await SharedPreferences.getInstance();
+    const sessionKeys = <String>[
+      'auth_token',
+      'accessToken',
+      'access_token',
+      'token',
+      'user',
+      'userType',
+      'role',
+    ];
+
+    for (final key in sessionKeys) {
+      await prefs.remove(key);
+    }
+  }
 }
 

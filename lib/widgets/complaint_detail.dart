@@ -90,7 +90,7 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    final baseUrl = _baseUrl ?? 'http://localhost:8080';
+    final baseUrl = _baseUrl ?? ApiConfig.defaultBaseUrl;
     return '$baseUrl$imagePath';
   }
 
